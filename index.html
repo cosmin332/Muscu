@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Muscu</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Muscu">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --bg2: #1c1c1e;
+  --bg3: #2c2c2e;
+  --bg4: #3a3a3c;
+  --accent: #FF6B35;
+  --accent2: #FF8C5A;
+  --green: #30D158;
+  --blue: #5e8ef7;
+  --purple: #a78bfa;
+  --red: #FF453A;
+  --text: #ffffff;
+  --text2: #aeaeb2;
+  --text3: #636366;
+  --nav-h: 64px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+
+/* ── APP SHELL ───────────────────────────── */
+#app { height: 100dvh; display: flex; flex-direction: column; position: relative; }
+.view { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.view.active { display: flex; }
+
+/* ── BOTTOM NAV ──────────────────────────── */
+#bottom-nav {
+  display: flex; flex-shrink: 0;
+  background: #111; border-top: 1px solid #ffffff0d;
+  padding-bottom: var(--safe-bottom);
+}
+.nav-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; padding: 10px 0;
+  background: none; border: none; color: var(--text3);
+  font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+  cursor: pointer; transition: color 0.15s; text-transform: uppercase;
+}
+.nav-tab .nav-icon { font-size: 22px; line-height: 1; }
+.nav-tab.active { color: var(--accent); }
+
+/* ── HEADER ──────────────────────────────── */
+.app-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(var(--safe-top) + 14px) 18px 14px;
+  background: var(--bg); border-bottom: 1px solid #ffffff0d; flex-shrink: 0;
+}
+.app-header h1 { flex: 1; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-icon { background: var(--bg3); border: none; color: var(--text); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 17px; transition: background 0.15s; }
+.btn-icon:active { background: var(--bg4); }
+.btn-pill { background: var(--accent); border: none; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; font-family: inherit; }
+.btn-pill:active { opacity: 0.8; }
+.btn-pill.grey { background: var(--bg3); color: var(--text2); }
+.btn-pill.green { background: var(--green); }
+
+/* ── SCROLL ──────────────────────────────── */
+.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 14px calc(var(--safe-bottom) + 16px); }
+
+/* ── EMPTY STATE ─────────────────────────── */
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 40px 32px; text-align: center; }
+.empty .ei { font-size: 64px; line-height: 1; }
+.empty h2 { font-size: 21px; font-weight: 700; }
+.empty p { color: var(--text2); font-size: 14px; line-height: 1.5; }
+.empty .btn-pill { padding: 13px 28px; font-size: 16px; border-radius: 14px; margin-top: 6px; }
+
+/* ── SESSION CARDS ───────────────────────── */
+.sessions-grid { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── WEEK SECTIONS ───────────────────────── */
+.week-section { margin-bottom: 6px; }
+.week-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 4px 8px; margin-bottom: 8px;
+}
+.week-header-label {
+  font-size: 13px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.6px; white-space: nowrap;
+}
+.week-header-line { flex: 1; height: 1px; background: #ffffff12; }
+.week-header-count { font-size: 11px; color: var(--text3); font-weight: 500; white-space: nowrap; }
+.week-sessions { display: flex; flex-direction: column; gap: 10px; }
+.session-card { background: var(--bg2); border-radius: 16px; overflow: hidden; cursor: pointer; transition: transform 0.15s; border: 1px solid #ffffff0a; }
+.session-card:active { transform: scale(0.98); }
+.session-card-inner { padding: 18px 16px; display: flex; align-items: center; gap: 14px; }
+.snum { width: 42px; height: 42px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; flex-shrink: 0; color: #fff; }
+.sinfo { flex: 1; min-width: 0; }
+.sinfo h3 { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sinfo p { color: var(--text2); font-size: 12px; margin-top: 3px; }
+
+/* ── EXERCISE CARDS ──────────────────────── */
+.exercises-list { display: flex; flex-direction: column; gap: 10px; }
+.ex-card { background: var(--bg2); border-radius: 16px; overflow: hidden; border: 1px solid #ffffff0a; transition: border-color 0.2s; }
+.ex-card.done { border-color: #30D15840; }
+.ex-header { display: flex; align-items: center; gap: 12px; padding: 13px 14px; }
+.ex-check { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--bg4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+.ex-card.done .ex-check { background: var(--green); border-color: var(--green); }
+.ex-info { flex: 1; min-width: 0; }
+.ex-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-card.done .ex-name { color: var(--text2); }
+.ex-tags { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+.tag { font-size: 11px; padding: 2px 7px; border-radius: 6px; font-weight: 600; }
+.tag.sets { background: #FF6B3522; color: var(--accent2); }
+.tag.reps { background: #a78bfa22; color: var(--purple); }
+.tag.rpe { background: #FFD60A22; color: #FFD60A; }
+.tag.note { background: #ffffff10; color: var(--text2); font-weight: 400; }
+.ex-last-perf { font-size: 11px; color: var(--text3); margin-top: 5px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.ex-last-perf .pr { color: #FFD60A; font-weight: 700; }
+.btn-play { background: #FF6B3520; border: none; color: var(--accent); width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 15px; transition: background 0.15s; }
+.btn-play:active { background: #FF6B3540; }
+
+/* ── SESSION META ────────────────────────── */
+.session-meta { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.meta-chip { background: var(--bg3); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--text2); }
+.meta-chip span { color: var(--text); font-weight: 600; }
+
+/* ── SET BUBBLES ─────────────────────────── */
+.sets-row { display: none; padding: 0 14px 12px; gap: 8px; flex-wrap: wrap; }
+.sets-row.visible { display: flex; }
+.sets-row-label { font-size: 11px; color: var(--text3); width: 100%; margin-bottom: -4px; }
+.set-bub {
+  min-width: 44px; height: 44px; padding: 0 6px;
+  border-radius: 11px; border: 2px solid var(--bg4);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; cursor: pointer; color: var(--text3);
+  transition: all 0.15s; user-select: none; line-height: 1.1;
+}
+.set-bub.done { background: var(--green); border-color: var(--green); color: #fff; }
+.set-bub .bub-weight { font-size: 12px; font-weight: 800; }
+.set-bub .bub-reps { font-size: 9px; font-weight: 500; opacity: 0.85; }
+.set-bub:active { transform: scale(0.91); }
+
+/* ── WORKOUT BAR ─────────────────────────── */
+.workout-bar { display: none; align-items: center; justify-content: space-between; padding: 10px 16px calc(var(--safe-bottom) + 10px); background: var(--bg2); border-top: 1px solid #ffffff10; gap: 12px; flex-shrink: 0; }
+.workout-bar.visible { display: flex; }
+.wb-info { flex: 1; }
+.wb-info p { font-size: 12px; color: var(--text2); }
+.wb-info strong { font-size: 14px; }
+.wb-circle { position: relative; width: 42px; height: 42px; }
+.wb-circle svg { transform: rotate(-90deg); }
+.wb-circle span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+
+/* ── COMPLETE BANNER ─────────────────────── */
+.complete-banner { background: #30D15818; border: 1px solid #30D15840; border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.complete-banner .bi { font-size: 28px; }
+.complete-banner h3 { font-size: 14px; font-weight: 700; color: var(--green); }
+.complete-banner p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ── DANGER BTN ──────────────────────────── */
+.danger-btn { background: none; border: 1px solid #FF453A35; color: var(--red); padding: 10px 16px; border-radius: 10px; font-size: 13px; cursor: pointer; width: 100%; margin-top: 18px; font-family: inherit; }
+.danger-btn:active { background: #FF453A15; }
+
+/* ── FAB ─────────────────────────────────── */
+.fab { position: absolute; bottom: calc(var(--safe-bottom) + var(--nav-h) + 18px); right: 18px; width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 20px #FF6B3560; z-index: 10; transition: transform 0.15s; }
+.fab:active { transform: scale(0.92); }
+
+/* ── MODALS ──────────────────────────────── */
+.overlay { position: fixed; inset: 0; background: #000000cc; z-index: 100; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.overlay.open { opacity: 1; pointer-events: all; }
+.sheet { background: var(--bg2); border-radius: 24px 24px 0 0; display: flex; flex-direction: column; max-height: 92dvh; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+.overlay.open .sheet { transform: translateY(0); }
+.handle { width: 36px; height: 4px; background: var(--bg4); border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
+.modal-header { display: flex; align-items: center; padding: 14px 18px 10px; flex-shrink: 0; }
+.modal-header h2 { flex: 1; font-size: 17px; font-weight: 700; }
+.modal-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 18px; }
+.modal-footer { display: flex; gap: 10px; padding: 14px 18px calc(var(--safe-bottom) + 14px); flex-shrink: 0; }
+.modal-footer .btn-pill { flex: 1; padding: 14px; font-size: 15px; border-radius: 13px; text-align: center; }
+
+/* ── SET INPUT MODAL ─────────────────────── */
+.set-input-sheet { background: var(--bg2); border-radius: 24px 24px 0 0; padding: 0 0 0; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+.overlay.open .set-input-sheet { transform: translateY(0); }
+.si-header { display: flex; align-items: center; padding: 14px 18px 0; }
+.si-header h3 { flex: 1; font-size: 16px; font-weight: 700; }
+.si-ex-name { font-size: 12px; color: var(--text2); padding: 2px 18px 12px; }
+.si-hint { margin: 0 18px 12px; background: var(--bg3); border-radius: 10px; padding: 10px 12px; font-size: 12px; color: var(--text2); line-height: 1.5; }
+.si-hint .hl { color: var(--accent2); font-weight: 700; }
+.si-hint .pr-badge { color: #FFD60A; font-weight: 700; }
+.si-fields { display: flex; gap: 12px; padding: 0 18px 14px; }
+.si-field { flex: 1; }
+.si-field-rpe { flex: 0.7; }
+.si-field label { display: block; font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.si-field input { width: 100%; background: var(--bg3); border: 2px solid var(--bg4); border-radius: 12px; color: var(--text); font-size: 22px; font-weight: 700; padding: 12px 14px; font-family: inherit; outline: none; text-align: center; transition: border-color 0.15s; }
+.si-field input:focus { border-color: var(--accent); }
+.si-field .unit { text-align: center; font-size: 11px; color: var(--text3); margin-top: 5px; font-weight: 600; }
+.si-actions { display: flex; gap: 10px; padding: 0 18px calc(var(--safe-bottom) + 16px); }
+.si-actions .btn-pill { flex: 1; padding: 14px; font-size: 15px; border-radius: 13px; text-align: center; }
+
+/* ── IMPORT MODAL ────────────────────────── */
+.import-name-row { margin-bottom: 10px; }
+.import-name-label { display: block; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.import-name-input { width: 100%; background: var(--bg3); border: 2px solid var(--bg4); border-radius: 10px; color: var(--text); font-size: 15px; font-weight: 600; padding: 10px 14px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+.import-name-input:focus { border-color: var(--accent); }
+.import-name-input::placeholder { color: var(--text3); font-weight: 400; }
+.import-ta { width: 100%; min-height: 220px; background: var(--bg3); border: 1px solid var(--bg4); border-radius: 10px; color: var(--text); font-size: 14px; line-height: 1.6; padding: 12px; resize: none; font-family: inherit; outline: none; margin-bottom: 12px; }
+.import-ta:focus { border-color: var(--accent); }
+.import-ta::placeholder { color: var(--text3); }
+.import-fmt { background: var(--bg3); border-radius: 10px; padding: 12px; margin-bottom: 4px; }
+.import-fmt h4 { font-size: 12px; color: var(--text2); margin-bottom: 7px; font-weight: 600; }
+.import-fmt pre { font-size: 11px; color: var(--text3); white-space: pre-wrap; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', monospace; }
+.import-fmt .ac { color: var(--accent2); }
+.import-fmt .gr { color: var(--green); }
+
+/* ── VIDEO MODAL ─────────────────────────── */
+.video-sheet { background: #000; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; max-height: 96dvh; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+.overlay.open .video-sheet { transform: translateY(0); }
+.video-top { display: flex; align-items: flex-start; padding: 12px 14px 10px; gap: 10px; background: #000; flex-shrink: 0; }
+.video-top-info { flex: 1; }
+.video-top-name { font-size: 14px; font-weight: 600; line-height: 1.3; }
+.video-top-tags { display: flex; gap: 5px; margin-top: 4px; }
+.video-wrap { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; flex-shrink: 0; }
+.video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+.video-body { flex: 1; overflow-y: auto; background: #111; padding: 14px; }
+.btn-open-yt { display: flex; align-items: center; gap: 10px; background: var(--bg2); border: none; color: var(--text); padding: 11px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; width: 100%; text-align: left; margin-bottom: 14px; font-family: inherit; }
+.video-sets h3 { font-size: 13px; color: var(--text2); margin-bottom: 10px; font-weight: 600; }
+.video-sets-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── STATS VIEW ──────────────────────────── */
+#view-stats .scroll { padding-top: 8px; }
+.stats-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.stat-card { background: var(--bg2); border-radius: 14px; padding: 14px; border: 1px solid #ffffff0a; }
+.stat-card .sc-val { font-size: 24px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.stat-card .sc-label { font-size: 11px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+.stat-card.full { grid-column: 1 / -1; }
+.stat-card.orange .sc-val { color: var(--accent); }
+.stat-card.green .sc-val { color: var(--green); }
+.stat-card.blue .sc-val { color: var(--blue); }
+.stat-card.yellow .sc-val { color: #FFD60A; }
+
+.section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; margin-top: 6px; }
+
+/* ── EXERCISE SELECTOR ───────────────────── */
+.ex-picker-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -14px 16px; padding: 0 14px 10px; }
+.ex-picker { display: flex; gap: 8px; width: max-content; }
+.ex-chip { background: var(--bg3); border: none; color: var(--text2); padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; transition: all 0.15s; }
+.ex-chip.active { background: var(--accent); color: #fff; }
+
+/* ── CHART ───────────────────────────────── */
+.chart-section { background: var(--bg2); border-radius: 14px; padding: 14px; border: 1px solid #ffffff0a; margin-bottom: 14px; }
+.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.chart-title { font-size: 13px; font-weight: 700; }
+.chart-tabs { display: flex; gap: 4px; }
+.chart-tab { background: var(--bg3); border: none; color: var(--text2); padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.chart-tab.active { background: var(--accent); color: #fff; }
+.chart-area { width: 100%; overflow: hidden; border-radius: 8px; }
+.chart-area svg { display: block; width: 100%; height: auto; }
+.chart-no-data { text-align: center; padding: 32px 0; color: var(--text3); font-size: 13px; }
+
+/* ── HISTORY LOG ─────────────────────────── */
+.log-card { background: var(--bg2); border-radius: 14px; padding: 14px; border: 1px solid #ffffff0a; margin-bottom: 10px; }
+.log-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.log-card-date { font-size: 13px; font-weight: 700; }
+.log-card-session { font-size: 11px; color: var(--text2); }
+.log-card-vol { font-size: 12px; color: var(--accent2); font-weight: 700; }
+.log-ex-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #ffffff08; }
+.log-ex-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.log-ex-name { font-size: 13px; font-weight: 600; }
+.log-sets-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.log-set-tag { background: var(--bg3); border-radius: 6px; padding: 3px 8px; font-size: 11px; color: var(--text2); font-weight: 500; }
+.log-set-tag.best { background: #FF6B3522; color: var(--accent2); }
+
+/* ── STATS EMPTY ─────────────────────────── */
+.stats-empty { text-align: center; padding: 48px 24px; color: var(--text3); }
+.stats-empty .sei { font-size: 48px; margin-bottom: 14px; }
+.stats-empty p { font-size: 14px; line-height: 1.5; }
+
+/* ── TOAST ───────────────────────────────── */
+.toast { position: fixed; bottom: calc(var(--safe-bottom) + var(--nav-h) + 18px); left: 50%; transform: translateX(-50%) translateY(16px); background: var(--bg3); color: var(--text); padding: 10px 18px; border-radius: 22px; font-size: 13px; font-weight: 500; z-index: 999; opacity: 0; pointer-events: none; transition: all 0.25s; white-space: nowrap; box-shadow: 0 4px 20px #00000080; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ PROGRAMME TAB ══════════════════════════ -->
+  <div id="view-home" class="view active">
+    <header class="app-header">
+      <div style="font-size:22px;flex-shrink:0">🏋️</div>
+      <h1>Mon Programme</h1>
+      <button class="btn-icon" id="btn-home-settings" style="display:none" onclick="openImport()">＋</button>
+    </header>
+    <div class="scroll" id="home-scroll">
+      <div id="sessions-grid" class="sessions-grid"></div>
+      <div id="home-empty" class="empty" style="display:none">
+        <div class="ei">💪</div>
+        <h2>Aucun programme</h2>
+        <p>Importe ton programme en collant le texte avec tes séances, exercices, séries et liens YouTube.</p>
+        <button class="btn-pill" onclick="openImport()">Importer mon programme</button>
+      </div>
+    </div>
+    <button class="fab" onclick="openImport()">＋</button>
+  </div>
+
+  <!-- ══ SESSION VIEW ═══════════════════════════ -->
+  <div id="view-session" class="view">
+    <header class="app-header">
+      <button class="btn-icon" onclick="goHome()">←</button>
+      <h1 id="session-view-title">Séance</h1>
+      <button class="btn-pill" id="btn-workout" onclick="toggleWorkout()">Commencer</button>
+    </header>
+    <div class="scroll" id="session-scroll">
+      <div id="complete-banner" class="complete-banner" style="display:none">
+        <div class="bi">🎉</div>
+        <div><h3>Séance terminée !</h3><p>Bravo, tous les exercices sont complétés.</p></div>
+      </div>
+      <div class="session-meta" id="session-meta"></div>
+      <div class="exercises-list" id="exercises-list"></div>
+      <button class="danger-btn" onclick="confirmDeleteSession()">🗑 Supprimer cette séance</button>
+    </div>
+    <div class="workout-bar" id="workout-bar">
+      <div class="wb-info">
+        <p>Progression</p>
+        <strong id="wb-label">0 / 0 séries</strong>
+      </div>
+      <div class="wb-circle">
+        <svg width="42" height="42" viewBox="0 0 42 42">
+          <circle cx="21" cy="21" r="17" fill="none" stroke="#2c2c2e" stroke-width="4"/>
+          <circle id="wb-arc" cx="21" cy="21" r="17" fill="none" stroke="#30D158" stroke-width="4"
+            stroke-dasharray="107" stroke-dashoffset="107" stroke-linecap="round"/>
+        </svg>
+        <span id="wb-pct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STATS TAB ══════════════════════════════ -->
+  <div id="view-stats" class="view">
+    <header class="app-header">
+      <div style="font-size:22px;flex-shrink:0">📊</div>
+      <h1>Statistiques</h1>
+    </header>
+    <div class="scroll" id="stats-scroll">
+      <div id="stats-content"></div>
+    </div>
+  </div>
+
+  <!-- ══ BOTTOM NAV ═════════════════════════════ -->
+  <nav id="bottom-nav">
+    <button class="nav-tab active" id="nav-programme" onclick="switchTab('programme')">
+      <span class="nav-icon">🏋️</span>Programme
+    </button>
+    <button class="nav-tab" id="nav-stats" onclick="switchTab('stats')">
+      <span class="nav-icon">📊</span>Stats
+    </button>
+  </nav>
+
+</div>
+
+<!-- ══ IMPORT MODAL ═══════════════════════════ -->
+<div class="overlay" id="import-modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-header">
+      <h2>Importer le programme</h2>
+      <button class="btn-icon" onclick="closeImport()" style="width:30px;height:30px;font-size:14px">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-name-row">
+        <label class="import-name-label">Nom de la semaine</label>
+        <input type="text" id="import-name" class="import-name-input" placeholder="ex. Semaine 1">
+      </div>
+      <textarea class="import-ta" id="import-ta"
+        placeholder="Colle ton programme ici...&#10;&#10;Séance A - Push&#10;• Développé couché : 4x8-10 https://youtu.be/...&#10;• Élévations latérales : 3x12 https://youtu.be/..."></textarea>
+      <div class="import-fmt">
+        <h4>Format accepté</h4>
+        <pre><span class="ac">Séance A – Push</span>
+• Développé couché : <span class="gr">4x6-8</span> https://youtu.be/xxx
+• Élévations latérales : <span class="gr">3x12-15</span> https://youtu.be/xxx
+
+<span class="ac">Séance B – Pull</span>
+- Tractions : <span class="gr">4x8</span>
+- Rowing barre : <span class="gr">4x10</span></pre>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-pill grey" onclick="closeImport()">Annuler</button>
+      <button class="btn-pill" onclick="runImport()">📥 Importer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SET INPUT MODAL ════════════════════════ -->
+<div class="overlay" id="set-input-modal">
+  <div class="set-input-sheet">
+    <div class="handle"></div>
+    <div class="si-header">
+      <h3 id="si-title">Série 1 / 4</h3>
+      <button class="btn-icon" onclick="closeSetInput()" style="width:30px;height:30px;font-size:14px">✕</button>
+    </div>
+    <div class="si-ex-name" id="si-ex-name"></div>
+    <div class="si-hint" id="si-hint" style="display:none"></div>
+    <div class="si-fields">
+      <div class="si-field">
+        <label>Poids</label>
+        <input type="number" id="si-weight" min="0" max="999" step="0.5" inputmode="decimal" placeholder="—">
+        <div class="unit">kg</div>
+      </div>
+      <div class="si-field">
+        <label>Répétitions</label>
+        <input type="number" id="si-reps" min="0" max="999" step="1" inputmode="numeric" placeholder="—">
+        <div class="unit">reps</div>
+      </div>
+      <div class="si-field si-field-rpe">
+        <label>RPE <span id="si-rpe-target"></span></label>
+        <input type="number" id="si-rpe" min="1" max="10" step="0.5" inputmode="decimal" placeholder="—">
+        <div class="unit">/ 10</div>
+      </div>
+    </div>
+    <div class="si-actions">
+      <button class="btn-pill grey" onclick="skipSet()">Passer</button>
+      <button class="btn-pill green" onclick="confirmSet()">✓ Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VIDEO MODAL ════════════════════════════ -->
+<div class="overlay" id="video-modal">
+  <div class="video-sheet">
+    <div class="handle" style="background:#333"></div>
+    <div class="video-top">
+      <div class="video-top-info">
+        <div class="video-top-name" id="video-title"></div>
+        <div class="video-top-tags" id="video-tags"></div>
+      </div>
+      <button class="btn-icon" onclick="closeVideo()" style="background:#222;width:30px;height:30px;font-size:14px">✕</button>
+    </div>
+    <div class="video-wrap">
+      <iframe id="yt-iframe" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+    <div class="video-body">
+      <button class="btn-open-yt" onclick="openYT()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.75 15.5v-7l6.25 3.5-6.25 3.5z"/></svg>
+        Ouvrir dans YouTube
+      </button>
+      <div class="video-sets" id="video-sets" style="display:none">
+        <h3 id="video-sets-label">Suivre les séries</h3>
+        <div class="video-sets-row" id="video-sets-row"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+const S = {
+  sessions: [],
+  logs: [],           // [{id, date, ts, sessionId, sessionName, exercises:[{exId, exName, sets:[{weight,reps}]}]}]
+  currentSessionId: null,
+  workoutMode: false,
+  workoutData: {},    // exId → [{weight,reps,done}, ...]
+  activeTab: 'programme',
+  // set input context
+  setCtx: null,       // {exId, idx}
+  // stats
+  statsExId: null,
+  statsChartMode: 'weight',
+  // video
+  videoUrl: '',
+  videoExId: null,
+};
+
+// ════════════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════════════
+function save() {
+  localStorage.setItem('muscu_sessions', JSON.stringify(S.sessions));
+  localStorage.setItem('muscu_logs', JSON.stringify(S.logs));
+}
+function load() {
+  try { S.sessions = JSON.parse(localStorage.getItem('muscu_sessions') || '[]'); } catch { S.sessions = []; }
+  try { S.logs = JSON.parse(localStorage.getItem('muscu_logs') || '[]'); } catch { S.logs = []; }
+}
+
+// ════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+function fmtDateShort(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' });
+}
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+function getSession(id) { return S.sessions.find(s => s.id === id); }
+function getExercise(sessionId, exId) {
+  const s = getSession(sessionId);
+  return s && s.exercises.find(e => e.id === exId);
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ════════════════════════════════════════════════
+// NAV / TABS
+// ════════════════════════════════════════════════
+function switchTab(tab) {
+  S.activeTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('nav-' + tab).classList.add('active');
+
+  // If in session view and switching tabs, go home first
+  if (document.getElementById('view-session').classList.contains('active')) {
+    endWorkout();
+  }
+
+  if (tab === 'programme') {
+    showView('home');
+    renderHome();
+  } else {
+    showView('stats');
+    renderStats();
+  }
+}
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+// HOME
+// ════════════════════════════════════════════════
+function renderHome() {
+  const grid = document.getElementById('sessions-grid');
+  const empty = document.getElementById('home-empty');
+  const fab = document.querySelector('.fab');
+
+  if (!S.sessions.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'flex';
+    fab.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  fab.style.display = 'flex';
+
+  // Group sessions by weekLabel (preserve insertion order)
+  const groups = [];
+  const groupMap = {};
+  S.sessions.forEach((s, i) => {
+    const label = s.weekLabel || 'Programme';
+    if (!groupMap[label]) {
+      groupMap[label] = { label, sessions: [], startIdx: i };
+      groups.push(groupMap[label]);
+    }
+    groupMap[label].sessions.push({ s, globalIdx: i });
+  });
+
+  grid.innerHTML = groups.map(g => {
+    const cards = g.sessions.map(({ s, globalIdx }) => {
+      const vids = s.exercises.filter(e => e.youtubeId).length;
+      return `<div class="session-card" onclick="openSession('${s.id}')">
+        <div class="session-card-inner">
+          <div class="snum">${globalIdx + 1}</div>
+          <div class="sinfo">
+            <h3>${esc(s.name)}</h3>
+            <p>${s.exercises.length} exercice${s.exercises.length > 1 ? 's' : ''}${vids ? ` · ${vids} vidéo${vids > 1 ? 's' : ''}` : ''}</p>
+          </div>
+          <div style="color:var(--text3);font-size:18px">›</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const count = g.sessions.length;
+    return `<div class="week-section">
+      <div class="week-header">
+        <div class="week-header-label">${esc(g.label)}</div>
+        <div class="week-header-line"></div>
+        <div class="week-header-count">${count} séance${count > 1 ? 's' : ''}</div>
+      </div>
+      <div class="week-sessions">${cards}</div>
+    </div>`;
+  }).join('');
+}
+
+function goHome() {
+  endWorkout();
+  S.currentSessionId = null;
+  showView('home');
+  renderHome();
+}
+
+// ════════════════════════════════════════════════
+// SESSION VIEW
+// ════════════════════════════════════════════════
+function openSession(sessionId) {
+  S.currentSessionId = sessionId;
+  S.workoutMode = false;
+  S.workoutData = {};
+  const sess = getSession(sessionId);
+  if (!sess) return;
+
+  document.getElementById('session-view-title').textContent = sess.name;
+  document.getElementById('btn-workout').textContent = 'Commencer';
+  document.getElementById('btn-workout').className = 'btn-pill';
+  document.getElementById('workout-bar').classList.remove('visible');
+  document.getElementById('complete-banner').style.display = 'none';
+
+  const total = sess.exercises.reduce((s, e) => s + (e.sets || 0), 0);
+  document.getElementById('session-meta').innerHTML = `
+    <div class="meta-chip"><span>${sess.exercises.length}</span> exercice${sess.exercises.length > 1 ? 's' : ''}</div>
+    ${total ? `<div class="meta-chip"><span>${total}</span> séries</div>` : ''}
+  `;
+
+  renderExercises(sess);
+  showView('session');
+}
+
+function renderExercises(sess) {
+  document.getElementById('exercises-list').innerHTML = sess.exercises.map(ex => exCardHTML(ex, sess)).join('');
+}
+
+function exCardHTML(ex, sess) {
+  const done = isExDone(ex.id);
+
+  // Last performance
+  const lastPerf = getLastPerf(ex.id, ex.name);
+  let perfHTML = '';
+  if (lastPerf) {
+    const pr = isPR(ex.id, ex.name, lastPerf.maxWeight);
+    perfHTML = `<div class="ex-last-perf">
+      <span>Dernière perf (${fmtDate(lastPerf.date)}) :</span>
+      <span class="hl">${lastPerf.maxWeight}kg × ${lastPerf.maxReps}</span>
+      ${pr ? '<span class="pr">🏆 PR</span>' : ''}
+      ${lastPerf.totalVol ? `<span>· Vol: ${lastPerf.totalVol}kg</span>` : ''}
+    </div>`;
+  }
+
+  let tagsHTML = '';
+  if (ex.sets) tagsHTML += `<span class="tag sets">${ex.sets} séries</span>`;
+  if (ex.reps) tagsHTML += `<span class="tag reps">${ex.reps} reps</span>`;
+  if (ex.rpe) tagsHTML += `<span class="tag rpe">RPE ${ex.rpe}</span>`;
+
+  const playBtn = ex.youtubeId
+    ? `<button class="btn-play" onclick="openVideo('${ex.id}')">▶</button>` : '';
+
+  let setsHTML = '';
+  if (S.workoutMode && ex.sets) {
+    const bubbles = Array.from({length: ex.sets}, (_, i) => {
+      const wd = S.workoutData[ex.id];
+      const set = wd && wd[i];
+      const isDone = set && set.done;
+      const weightTxt = isDone && set.weight != null ? set.weight : '';
+      const repsTxt = isDone && set.reps != null ? set.reps : '';
+      return `<div class="set-bub${isDone ? ' done' : ''}" onclick="tapSet('${ex.id}', ${i})">
+        ${isDone && weightTxt !== ''
+          ? `<span class="bub-weight">${weightTxt}</span><span class="bub-reps">${repsTxt ? repsTxt + 'r' : '✓'}</span>`
+          : `<span style="font-size:13px">${i + 1}</span>`}
+      </div>`;
+    }).join('');
+    setsHTML = `<div class="sets-row visible"><div class="sets-row-label">Tapez pour saisir le poids :</div>${bubbles}</div>`;
+  }
+
+  return `<div class="ex-card${done ? ' done' : ''}" id="ex-${ex.id}">
+    <div class="ex-header">
+      <div class="ex-check" onclick="toggleExDone('${ex.id}')">${done ? '✓' : ''}</div>
+      <div class="ex-info">
+        <div class="ex-name">${esc(ex.name)}</div>
+        <div class="ex-tags">${tagsHTML}</div>
+        ${perfHTML}
+      </div>
+      ${playBtn}
+    </div>
+    ${setsHTML}
+  </div>`;
+}
+
+function isExDone(exId) {
+  if (!S.workoutMode) return false;
+  const wd = S.workoutData[exId];
+  if (!wd) return false;
+  return wd.every(s => s.done);
+}
+
+// ════════════════════════════════════════════════
+// WORKOUT MODE
+// ════════════════════════════════════════════════
+function toggleWorkout() {
+  if (S.workoutMode) {
+    // Finish workout — save log
+    finishWorkout();
+  } else {
+    startWorkout();
+  }
+}
+
+function startWorkout() {
+  const sess = getSession(S.currentSessionId);
+  if (!sess) return;
+  S.workoutMode = true;
+  S.workoutData = {};
+
+  sess.exercises.forEach(ex => {
+    const count = ex.sets || 0;
+    // Pre-fill with last weights
+    const last = getLastSetWeights(ex.id, ex.name);
+    S.workoutData[ex.id] = Array.from({length: count}, (_, i) => ({
+      weight: last && last[i] != null ? last[i].weight : null,
+      reps: null,
+      done: false,
+    }));
+  });
+
+  document.getElementById('btn-workout').textContent = 'Terminer ✓';
+  document.getElementById('btn-workout').className = 'btn-pill green';
+  document.getElementById('workout-bar').classList.add('visible');
+  document.getElementById('complete-banner').style.display = 'none';
+  renderExercises(sess);
+  updateWB();
+}
+
+function endWorkout() {
+  S.workoutMode = false;
+  S.workoutData = {};
+  document.getElementById('btn-workout').textContent = 'Commencer';
+  document.getElementById('btn-workout').className = 'btn-pill';
+  document.getElementById('workout-bar').classList.remove('visible');
+  document.getElementById('complete-banner').style.display = 'none';
+}
+
+function finishWorkout() {
+  const sess = getSession(S.currentSessionId);
+  if (!sess) return;
+
+  // Build log entry
+  const exercises = sess.exercises
+    .map(ex => {
+      const wd = S.workoutData[ex.id] || [];
+      const doneSets = wd.filter(s => s.done).map(s => ({ weight: s.weight, reps: s.reps, rpe: s.rpe ?? null }));
+      return doneSets.length ? { exId: ex.id, exName: ex.name, targetRpe: ex.rpe, sets: doneSets } : null;
+    })
+    .filter(Boolean);
+
+  if (exercises.length) {
+    S.logs.push({
+      id: uid(),
+      date: todayISO(),
+      ts: Date.now(),
+      sessionId: sess.id,
+      sessionName: sess.name,
+      exercises,
+    });
+    save();
+    toast(`💾 Séance sauvegardée — ${exercises.length} exercice${exercises.length > 1 ? 's' : ''} logués`);
+  } else {
+    toast('Aucune série complétée — séance non sauvegardée');
+  }
+
+  endWorkout();
+  const sess2 = getSession(S.currentSessionId);
+  if (sess2) renderExercises(sess2);
+}
+
+function tapSet(exId, idx) {
+  if (!S.workoutMode) return;
+  S.setCtx = { exId, idx };
+  openSetInput(exId, idx);
+}
+
+function toggleExDone(exId) {
+  if (!S.workoutMode) return;
+  const wd = S.workoutData[exId];
+  if (!wd) return;
+  const allDone = wd.every(s => s.done);
+  wd.forEach(s => { s.done = !allDone; });
+  updateExCard(exId);
+  updateWB();
+}
+
+function updateExCard(exId) {
+  const sess = getSession(S.currentSessionId);
+  const ex = sess && sess.exercises.find(e => e.id === exId);
+  if (!ex) return;
+  const card = document.getElementById('ex-' + exId);
+  if (!card) return;
+  card.outerHTML = exCardHTML(ex, sess);
+  checkAllDone(sess);
+}
+
+function checkAllDone(sess) {
+  const exWithSets = sess.exercises.filter(e => e.sets);
+  if (!exWithSets.length) return;
+  const allDone = exWithSets.every(ex => {
+    const wd = S.workoutData[ex.id];
+    return wd && wd.every(s => s.done);
+  });
+  if (allDone) {
+    document.getElementById('complete-banner').style.display = 'flex';
+    document.getElementById('session-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function updateWB() {
+  const sess = getSession(S.currentSessionId);
+  if (!sess) return;
+  let total = 0, done = 0;
+  sess.exercises.forEach(ex => {
+    const wd = S.workoutData[ex.id] || [];
+    total += wd.length;
+    done += wd.filter(s => s.done).length;
+  });
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const circ = 2 * Math.PI * 17;
+  document.getElementById('wb-label').textContent = `${done} / ${total} séries`;
+  document.getElementById('wb-arc').style.strokeDashoffset = circ - (pct / 100) * circ;
+  document.getElementById('wb-pct').textContent = pct + '%';
+}
+
+// ════════════════════════════════════════════════
+// SET INPUT MODAL
+// ════════════════════════════════════════════════
+function openSetInput(exId, idx) {
+  const sess = getSession(S.currentSessionId);
+  const ex = sess && sess.exercises.find(e => e.id === exId);
+  if (!ex) return;
+
+  const wd = S.workoutData[exId];
+  const set = wd && wd[idx];
+
+  document.getElementById('si-title').textContent = `Série ${idx + 1} / ${ex.sets}`;
+  document.getElementById('si-ex-name').textContent = ex.name;
+
+  // Hint: last workout values
+  const hist = getLastPerf(exId, ex.name);
+  const hintEl = document.getElementById('si-hint');
+  if (hist && hist.setWeights && hist.setWeights[idx] != null) {
+    const sw = hist.setWeights[idx];
+    hintEl.innerHTML = `Dernière fois : <span class="hl">${sw.weight != null ? sw.weight + 'kg' : '—'}</span> × <span class="hl">${sw.reps != null ? sw.reps + ' reps' : '—'}</span>`;
+    hintEl.style.display = 'block';
+  } else if (hist) {
+    hintEl.innerHTML = `Dernière perf : max <span class="hl">${hist.maxWeight}kg × ${hist.maxReps}</span>`;
+    hintEl.style.display = 'block';
+  } else {
+    hintEl.style.display = 'none';
+  }
+
+  // Show target RPE if defined
+  document.getElementById('si-rpe-target').textContent = ex.rpe ? `cible ${ex.rpe}` : '';
+
+  // Pre-fill
+  const wInput = document.getElementById('si-weight');
+  const rInput = document.getElementById('si-reps');
+  const rpeInput = document.getElementById('si-rpe');
+  wInput.value = (set && set.weight != null) ? set.weight : '';
+  rInput.value = (set && set.reps != null) ? set.reps : '';
+  rpeInput.value = (set && set.rpe != null) ? set.rpe : '';
+
+  document.getElementById('set-input-modal').classList.add('open');
+  setTimeout(() => wInput.focus(), 320);
+}
+
+function closeSetInput() {
+  document.getElementById('set-input-modal').classList.remove('open');
+  S.setCtx = null;
+}
+
+function confirmSet() {
+  if (!S.setCtx) return;
+  const { exId, idx } = S.setCtx;
+  const weight = parseFloat(document.getElementById('si-weight').value);
+  const reps = parseInt(document.getElementById('si-reps').value);
+  const rpe = parseFloat(document.getElementById('si-rpe').value);
+  const wd = S.workoutData[exId];
+  if (wd && wd[idx]) {
+    wd[idx].weight = isNaN(weight) ? null : weight;
+    wd[idx].reps = isNaN(reps) ? null : reps;
+    wd[idx].rpe = isNaN(rpe) ? null : rpe;
+    wd[idx].done = true;
+  }
+  closeSetInput();
+  const sess = getSession(S.currentSessionId);
+  const ex = sess && sess.exercises.find(e => e.id === exId);
+  if (ex) updateExCard(exId);
+  updateWB();
+
+  // Sync video modal if open
+  syncVideoSets(exId);
+}
+
+function skipSet() {
+  if (!S.setCtx) return;
+  const { exId, idx } = S.setCtx;
+  const wd = S.workoutData[exId];
+  if (wd && wd[idx]) { wd[idx].done = true; }
+  closeSetInput();
+  const sess = getSession(S.currentSessionId);
+  const ex = sess && sess.exercises.find(e => e.id === exId);
+  if (ex) updateExCard(exId);
+  updateWB();
+  syncVideoSets(exId);
+}
+
+// Enter key on weight → focus reps
+document.getElementById('si-weight').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('si-reps').focus();
+});
+document.getElementById('si-reps').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('si-rpe').focus();
+});
+document.getElementById('si-rpe').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmSet();
+});
+
+// ════════════════════════════════════════════════
+// PERFORMANCE HISTORY LOOKUP
+// ════════════════════════════════════════════════
+function getExLogs(exId, exName) {
+  const out = [];
+  S.logs.forEach(log => {
+    log.exercises.forEach(ex => {
+      if (ex.exId === exId || ex.exName.toLowerCase() === exName.toLowerCase()) {
+        out.push({ date: log.date, ts: log.ts, sessionName: log.sessionName, sets: ex.sets });
+      }
+    });
+  });
+  return out.sort((a, b) => a.ts - b.ts);
+}
+
+function getLastPerf(exId, exName) {
+  const hist = getExLogs(exId, exName);
+  if (!hist.length) return null;
+  const last = hist[hist.length - 1];
+  const doneSets = last.sets.filter(s => s.weight != null || s.reps != null);
+  if (!doneSets.length) return null;
+  const maxWeight = Math.max(...doneSets.filter(s => s.weight != null).map(s => s.weight), 0);
+  const maxReps = doneSets.find(s => s.weight === maxWeight)?.reps || doneSets[0].reps;
+  const totalVol = doneSets.reduce((sum, s) => sum + (s.weight || 0) * (s.reps || 0), 0);
+  return { date: last.date, maxWeight, maxReps, totalVol: Math.round(totalVol), setWeights: last.sets };
+}
+
+function isPR(exId, exName, weight) {
+  const hist = getExLogs(exId, exName);
+  if (hist.length < 2) return false; // need at least 2 sessions
+  // Check if this weight is the all-time max (excluding most recent)
+  const allWeights = hist.flatMap(h => h.sets.filter(s => s.weight != null).map(s => s.weight));
+  return weight >= Math.max(...allWeights);
+}
+
+function getLastSetWeights(exId, exName) {
+  const hist = getExLogs(exId, exName);
+  if (!hist.length) return null;
+  return hist[hist.length - 1].sets;
+}
+
+// ════════════════════════════════════════════════
+// VIDEO
+// ════════════════════════════════════════════════
+function openVideo(exId) {
+  const sess = getSession(S.currentSessionId);
+  const ex = sess && sess.exercises.find(e => e.id === exId);
+  if (!ex || !ex.youtubeId) return;
+  S.videoExId = exId;
+  S.videoUrl = `https://www.youtube.com/watch?v=${ex.youtubeId}`;
+
+  document.getElementById('video-title').textContent = ex.name;
+  let tags = '';
+  if (ex.sets) tags += `<span class="tag sets">${ex.sets} séries</span>`;
+  if (ex.reps) tags += `<span class="tag reps">${ex.reps} reps</span>`;
+  if (ex.rpe) tags += `<span class="tag rpe">RPE ${ex.rpe}</span>`;
+  document.getElementById('video-tags').innerHTML = tags;
+
+  document.getElementById('yt-iframe').src =
+    `https://www.youtube.com/embed/${ex.youtubeId}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+
+  syncVideoSets(exId);
+  document.getElementById('video-modal').classList.add('open');
+}
+
+function syncVideoSets(exId) {
+  const vsEl = document.getElementById('video-sets');
+  if (S.videoExId !== exId) return;
+  const sess = getSession(S.currentSessionId);
+  const ex = sess && sess.exercises.find(e => e.id === exId);
+  if (!ex || !S.workoutMode || !ex.sets) { vsEl.style.display = 'none'; return; }
+
+  vsEl.style.display = 'block';
+  const wd = S.workoutData[exId] || [];
+  const done = wd.filter(s => s.done).length;
+  document.getElementById('video-sets-label').textContent = `Séries (${done}/${ex.sets})`;
+  document.getElementById('video-sets-row').innerHTML = Array.from({length: ex.sets}, (_, i) => {
+    const s = wd[i];
+    const isDone = s && s.done;
+    return `<div class="set-bub${isDone ? ' done' : ''}" onclick="tapSet('${exId}', ${i});closeVideo()">
+      ${isDone && s.weight != null ? `<span class="bub-weight">${s.weight}</span><span class="bub-reps">${s.reps != null ? s.reps + 'r' : '✓'}</span>` : `<span style="font-size:13px">${i + 1}</span>`}
+    </div>`;
+  }).join('');
+}
+
+function closeVideo() {
+  document.getElementById('video-modal').classList.remove('open');
+  document.getElementById('yt-iframe').src = '';
+  S.videoExId = null;
+}
+
+function openYT() { if (S.videoUrl) window.open(S.videoUrl, '_blank'); }
+
+document.getElementById('video-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('video-modal')) closeVideo();
+});
+
+// ════════════════════════════════════════════════
+// IMPORT
+// ════════════════════════════════════════════════
+function openImport() {
+  const existing = [...new Set(S.sessions.map(s => s.weekLabel).filter(Boolean))];
+  document.getElementById('import-name').value =
+    existing.length ? `Semaine ${existing.length + 1}` : 'Semaine 1';
+  document.getElementById('import-modal').classList.add('open');
+}
+function closeImport() { document.getElementById('import-modal').classList.remove('open'); }
+document.getElementById('import-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('import-modal')) closeImport();
+});
+
+function runImport() {
+  const text = document.getElementById('import-ta').value.trim();
+  const weekLabel = document.getElementById('import-name').value.trim() || `Import ${S.sessions.length + 1}`;
+  if (!text) { toast('Colle ton programme d\'abord !'); return; }
+  const parsed = parseProgram(text);
+  if (!parsed.length) { toast('⚠️ Aucune séance détectée'); return; }
+  parsed.forEach(s => { s.weekLabel = weekLabel; });
+  S.sessions = [...S.sessions, ...parsed];
+  save();
+  closeImport();
+  document.getElementById('import-ta').value = '';
+  document.getElementById('import-name').value = '';
+  goHome();
+  toast(`✅ ${parsed.length} séance${parsed.length > 1 ? 's' : ''} importée${parsed.length > 1 ? 's' : ''} · ${weekLabel}`);
+}
+
+// ════════════════════════════════════════════════
+// PARSER
+// ════════════════════════════════════════════════
+function parseProgram(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const sessions = [];
+  let cur = null;
+
+  // A line is a session header if:
+  // - markdown heading (#, ##…)
+  // - starts with a known day/session keyword
+  // - starts with ≥2 uppercase letters followed by a separator (handles LUNDI –, MERCREDI –, etc.)
+  // - no URL on the line
+  const isHeader = l => {
+    if (/^#+\s/.test(l)) return true;
+    if (/^(séance|seance|session|jour|day|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|monday|tuesday|wednesday|thursday|friday|saturday|sunday|entraînement|entrainement|workout)\b/i.test(l)) return true;
+    if (l.match(/https?:\/\//)) return false;
+    // All-caps leading word (≥2 chars) then separator: "LUNDI – UPPER", "PUSH DAY", etc.
+    if (/^[A-ZÀÁÂÉÈÊÎÏÔÙÛÜ]{2,}(?:\s[A-ZÀÁÂÉÈÊÎÏÔÙÛÜ]{1,})*\s*[\-–—:]/.test(l)) return true;
+    return false;
+  };
+
+  const isBullet = l => /^[-•*▸→►]\s/.test(l) || /^\d+[.)]\s/.test(l);
+
+  // Detect exercise lines: has sets pattern (NxM) or a YouTube URL
+  const looksLikeExercise = l => /\d+\s*[x×X]\s*\d/.test(l) || /https?:\/\//.test(l);
+
+  for (const line of lines) {
+    const clean = line.replace(/^#+\s*/, '').trim();
+    if (isHeader(line) && !isBullet(line) && !looksLikeExercise(line)) {
+      cur = { id: uid(), name: clean, exercises: [] };
+      sessions.push(cur);
+    } else if (isBullet(line)) {
+      if (!cur) { cur = { id: uid(), name: 'Programme', exercises: [] }; sessions.push(cur); }
+      cur.exercises.push(parseEx(line.replace(/^[-•*▸→►\d.)\s]+/, '').trim()));
+    } else if (looksLikeExercise(line)) {
+      // Plain exercise line (no bullet) — create a default session if none exists
+      if (!cur) { cur = { id: uid(), name: 'Programme', exercises: [] }; sessions.push(cur); }
+      cur.exercises.push(parseEx(clean));
+    }
+  }
+  return sessions.filter(s => s.exercises.length > 0);
+}
+
+function parseEx(content) {
+  const urlRe = /(https?:\/\/[^\s]+)/;
+  const urlM = content.match(urlRe);
+  const url = urlM ? urlM[1] : null;
+  let rest = url ? content.replace(url, '').trim() : content;
+
+  // Capture @RPE target before stripping
+  const rpeM = rest.match(/@RPE([\d\-–]+)/i);
+  const rpe = rpeM ? rpeM[1] : null;
+  // Strip @RPE annotations and parenthetical remarks like "(Pas de lien fourni)"
+  rest = rest.replace(/@RPE[\d\-–]+/gi, '').replace(/\([^)]*\)/g, '').trim();
+
+  const srRe = /(\d+)\s*[x×X]\s*(\d+(?:[–\-]\d+)?)/;
+  const srM = rest.match(srRe);
+  let sets = null, reps = null;
+  if (srM) {
+    sets = parseInt(srM[1]); reps = srM[2];
+    rest = rest.replace(srM[0], '').replace(/\s*[-–—:]\s*$/, '').trim();
+  } else {
+    const frM = rest.match(/(\d+)\s*s[ée]ries?\s+(?:de\s+)?(\d+(?:[–\-]\d+)?)/i);
+    if (frM) {
+      sets = parseInt(frM[1]); reps = frM[2];
+      rest = rest.replace(frM[0], '').replace(/\s*[-–—:]\s*$/, '').trim();
+    }
+  }
+  rest = rest.replace(/\s*[-–—:]\s*$/, '').trim();
+
+  return { id: uid(), name: rest || 'Exercice', sets, reps, rpe, youtubeId: url ? extractYtId(url) : null, note: '' };
+}
+
+function extractYtId(url) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_\-]{11})/);
+  return m ? m[1] : null;
+}
+
+// ════════════════════════════════════════════════
+// DELETE SESSION
+// ════════════════════════════════════════════════
+function confirmDeleteSession() {
+  const s = getSession(S.currentSessionId);
+  if (!s) return;
+  if (confirm(`Supprimer "${s.name}" ?`)) {
+    S.sessions = S.sessions.filter(x => x.id !== S.currentSessionId);
+    save();
+    goHome();
+    toast('🗑 Séance supprimée');
+  }
+}
+
+// ════════════════════════════════════════════════
+// STATS VIEW
+// ════════════════════════════════════════════════
+function renderStats() {
+  const el = document.getElementById('stats-content');
+
+  if (!S.logs.length && !S.sessions.length) {
+    el.innerHTML = `<div class="stats-empty"><div class="sei">📊</div>
+      <p>Aucune donnée pour l'instant.<br>Importe ton programme et commence une séance !</p></div>`;
+    return;
+  }
+
+  // Compute global stats
+  const totalSessions = S.logs.length;
+  const totalSets = S.logs.reduce((s, l) => s + l.exercises.reduce((s2, e) => s2 + e.sets.filter(x => x.weight != null).length, 0), 0);
+  const totalVol = S.logs.reduce((s, l) => s + l.exercises.reduce((s2, e) =>
+    s2 + e.sets.reduce((s3, x) => s3 + (x.weight || 0) * (x.reps || 0), 0), 0), 0);
+  const allWeights = S.logs.flatMap(l => l.exercises.flatMap(e => e.sets.map(s => s.weight))).filter(w => w != null);
+  const maxWeight = allWeights.length ? Math.max(...allWeights) : 0;
+
+  // Find which exercise has the max weight
+  let maxEx = '';
+  S.logs.forEach(l => l.exercises.forEach(e => {
+    e.sets.forEach(s => { if (s.weight === maxWeight) maxEx = e.exName; });
+  }));
+
+  el.innerHTML = `
+    <div class="stats-summary">
+      <div class="stat-card orange">
+        <div class="sc-val">${totalSessions}</div>
+        <div class="sc-label">Séances</div>
+      </div>
+      <div class="stat-card green">
+        <div class="sc-val">${totalSets}</div>
+        <div class="sc-label">Séries logées</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="sc-val">${totalVol >= 1000 ? (totalVol / 1000).toFixed(1) + 't' : Math.round(totalVol) + 'kg'}</div>
+        <div class="sc-label">Volume total</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="sc-val">${maxWeight ? maxWeight + 'kg' : '—'}</div>
+        <div class="sc-label">Record${maxEx ? ' · ' + maxEx.split(' ').slice(0,2).join(' ') : ''}</div>
+      </div>
+    </div>
+
+    <div class="section-title">Évolution par exercice</div>
+    <div class="ex-picker-wrap"><div class="ex-picker" id="ex-picker"></div></div>
+    <div id="chart-section"></div>
+
+    <div class="section-title" style="margin-top:20px">Historique des séances</div>
+    <div id="sessions-log"></div>
+  `;
+
+  // Build exercise list (unique names from logs)
+  const exNames = [...new Set(S.logs.flatMap(l => l.exercises.map(e => e.exName)))];
+
+  if (!S.statsExId && exNames.length) S.statsExId = exNames[0];
+
+  const picker = document.getElementById('ex-picker');
+  picker.innerHTML = exNames.map(name =>
+    `<button class="ex-chip${name === S.statsExId ? ' active' : ''}" onclick="selectStatsEx('${esc(name)}')">${esc(name)}</button>`
+  ).join('');
+
+  renderChart();
+  renderSessionsLog();
+}
+
+function selectStatsEx(name) {
+  S.statsExId = name;
+  document.querySelectorAll('.ex-chip').forEach(c => c.classList.toggle('active', c.textContent === name));
+  renderChart();
+}
+
+function renderChart() {
+  const el = document.getElementById('chart-section');
+  if (!el) return;
+  if (!S.statsExId) { el.innerHTML = ''; return; }
+
+  const data = buildExChartData(S.statsExId);
+
+  el.innerHTML = `
+    <div class="chart-section">
+      <div class="chart-header">
+        <div class="chart-title">${esc(S.statsExId.split(' ').slice(0, 3).join(' '))}</div>
+        <div class="chart-tabs">
+          <button class="chart-tab${S.statsChartMode === 'weight' ? ' active' : ''}" onclick="setChartMode('weight')">Poids max</button>
+          <button class="chart-tab${S.statsChartMode === 'volume' ? ' active' : ''}" onclick="setChartMode('volume')">Volume</button>
+        </div>
+      </div>
+      <div class="chart-area" id="chart-area">
+        ${data.length < 1 ? '<div class="chart-no-data">Aucune donnée pour cet exercice</div>' : buildSVG(data)}
+      </div>
+    </div>
+    ${data.length ? renderExStats(data) : ''}
+  `;
+}
+
+function setChartMode(mode) {
+  S.statsChartMode = mode;
+  renderChart();
+}
+
+function buildExChartData(exName) {
+  const points = [];
+  S.logs.forEach(log => {
+    log.exercises.forEach(ex => {
+      if (ex.exName.toLowerCase() !== exName.toLowerCase()) return;
+      const ws = ex.sets.filter(s => s.weight != null);
+      if (!ws.length) return;
+      const maxW = Math.max(...ws.map(s => s.weight));
+      const vol = ws.reduce((s, x) => s + x.weight * (x.reps || 0), 0);
+      const maxReps = ws.find(s => s.weight === maxW)?.reps;
+      points.push({ date: log.date, ts: log.ts, maxWeight: maxW, maxReps, volume: Math.round(vol), sessionName: log.sessionName });
+    });
+  });
+  return points.sort((a, b) => a.ts - b.ts);
+}
+
+function buildSVG(data) {
+  if (!data.length) return '';
+  const W = 360, H = 180;
+  const P = { t: 16, r: 16, b: 36, l: 46 };
+  const cW = W - P.l - P.r;
+  const cH = H - P.t - P.b;
+
+  const vals = data.map(d => S.statsChartMode === 'weight' ? d.maxWeight : d.volume);
+  const minV = Math.min(...vals);
+  const maxV = Math.max(...vals);
+  const span = maxV - minV || 1;
+
+  const xS = i => P.l + (data.length > 1 ? i / (data.length - 1) : 0.5) * cW;
+  const yS = v => P.t + cH - ((v - minV) / span) * cH;
+
+  const pts = data.map((d, i) => `${xS(i)},${yS(vals[i])}`).join(' ');
+  const area = `${P.l},${P.t + cH} ${pts} ${xS(data.length - 1)},${P.t + cH}`;
+  const color = S.statsChartMode === 'weight' ? '#FF6B35' : '#5e8ef7';
+
+  // Y ticks
+  const yTicks = 4;
+  const yTickLines = Array.from({length: yTicks + 1}, (_, i) => {
+    const v = minV + span * i / yTicks;
+    const y = yS(v);
+    const label = S.statsChartMode === 'weight' ? Math.round(v) + 'kg' : (v >= 1000 ? (v / 1000).toFixed(1) + 't' : Math.round(v) + 'kg');
+    return `<line x1="${P.l}" y1="${y}" x2="${P.l + cW}" y2="${y}" stroke="#2c2c2e" stroke-width="1"/>
+            <text x="${P.l - 4}" y="${y + 4}" text-anchor="end" font-size="8" fill="#636366">${label}</text>`;
+  }).join('');
+
+  // X ticks (show up to 5)
+  const step = Math.max(1, Math.floor(data.length / 5));
+  const xTickLines = data.filter((_, i) => i % step === 0 || i === data.length - 1).map((d, _, arr) => {
+    const origIdx = data.indexOf(d);
+    const x = xS(origIdx);
+    return `<text x="${x}" y="${H - 6}" text-anchor="middle" font-size="8" fill="#636366">${fmtDate(d.date)}</text>`;
+  }).join('');
+
+  // Dots with value labels
+  const dots = data.map((d, i) => {
+    const x = xS(i), y = yS(vals[i]);
+    const label = S.statsChartMode === 'weight' ? `${d.maxWeight}kg` : '';
+    return `<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="#1c1c1e" stroke-width="2"/>
+      ${i === data.length - 1 && label ? `<text x="${x}" y="${y - 9}" text-anchor="middle" font-size="9" fill="${color}" font-weight="700">${label}</text>` : ''}`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    ${yTickLines}
+    <polygon points="${area}" fill="${color}" opacity="0.12"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+    ${xTickLines}
+    <line x1="${P.l}" y1="${P.t}" x2="${P.l}" y2="${P.t + cH}" stroke="#3a3a3c" stroke-width="1"/>
+    <line x1="${P.l}" y1="${P.t + cH}" x2="${P.l + cW}" y2="${P.t + cH}" stroke="#3a3a3c" stroke-width="1"/>
+  </svg>`;
+}
+
+function renderExStats(data) {
+  const maxW = Math.max(...data.map(d => d.maxWeight));
+  const maxVol = Math.max(...data.map(d => d.volume));
+  const trend = data.length > 1 ? data[data.length - 1].maxWeight - data[0].maxWeight : 0;
+  return `<div class="stats-summary" style="margin-top:10px">
+    <div class="stat-card yellow"><div class="sc-val">${maxW}kg</div><div class="sc-label">Poids max (PR)</div></div>
+    <div class="stat-card blue"><div class="sc-val">${trend >= 0 ? '+' : ''}${trend}kg</div><div class="sc-label">Progression</div></div>
+  </div>`;
+}
+
+function renderSessionsLog() {
+  const el = document.getElementById('sessions-log');
+  if (!el) return;
+  if (!S.logs.length) { el.innerHTML = '<p style="color:var(--text3);font-size:13px">Aucune séance enregistrée.</p>'; return; }
+
+  const sorted = [...S.logs].sort((a, b) => b.ts - a.ts);
+  el.innerHTML = sorted.map(log => {
+    const vol = log.exercises.reduce((s, e) =>
+      s + e.sets.reduce((s2, x) => s2 + (x.weight || 0) * (x.reps || 0), 0), 0);
+    const allW = log.exercises.flatMap(e => e.sets.map(s => s.weight)).filter(w => w != null);
+    const maxW = allW.length ? Math.max(...allW) : null;
+    let maxWEx = '';
+    if (maxW) log.exercises.forEach(e => { if (e.sets.some(s => s.weight === maxW)) maxWEx = e.exName; });
+
+    const exRows = log.exercises.map(ex => {
+      const setTags = ex.sets.map((s, i) => {
+        const isBest = s.weight != null && s.weight === Math.max(...ex.sets.filter(x => x.weight != null).map(x => x.weight));
+        const rpeStr = s.rpe != null ? ` @${s.rpe}` : '';
+        const label = s.weight != null ? `${s.weight}kg${s.reps != null ? ' × ' + s.reps : ''}${rpeStr}` : (s.reps != null ? s.reps + ' reps' + rpeStr : '?');
+        return `<span class="log-set-tag${isBest ? ' best' : ''}">${label}</span>`;
+      }).join('');
+      return `<div class="log-ex-row"><div class="log-ex-name">${esc(ex.exName)}</div><div class="log-sets-list">${setTags}</div></div>`;
+    }).join('');
+
+    return `<div class="log-card">
+      <div class="log-card-header">
+        <div>
+          <div class="log-card-date">${fmtDateShort(log.date)}</div>
+          <div class="log-card-session">${esc(log.sessionName)}</div>
+        </div>
+        <div style="text-align:right">
+          ${vol ? `<div class="log-card-vol">${Math.round(vol)}kg vol.</div>` : ''}
+          ${maxW ? `<div style="font-size:11px;color:var(--text3)">Max ${maxW}kg${maxWEx ? ' · ' + maxWEx.split(' ')[0] : ''}</div>` : ''}
+        </div>
+      </div>
+      ${exRows}
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════
+// MODAL: set input overlay close
+// ════════════════════════════════════════════════
+document.getElementById('set-input-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('set-input-modal')) closeSetInput();
+});
+
+// ════════════════════════════════════════════════
+// SERVICE WORKER
+// ════════════════════════════════════════════════
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+load();
+renderHome();
+</script>
+</body>
+</html>
