@@ -78,6 +78,50 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .empty .btn-pill { padding: 13px 28px; font-size: 16px; border-radius: 14px; margin-top: 6px; }
 
 /* ── SESSION CARDS ───────────────────────── */
+/* ── SUB-TABS ────────────────────────────── */
+.sub-tabs {
+  display: flex; gap: 6px; padding: 10px 14px 6px;
+  flex-shrink: 0; background: var(--bg);
+}
+.sub-tab {
+  flex: 1; background: var(--bg3); border: none; color: var(--text2);
+  padding: 9px 0; border-radius: 12px; font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.sub-tab.active { background: var(--accent); color: #fff; }
+.sub-tab.hyrox.active { background: #06b6d4; }
+
+/* ── EXERCISE NOTES ──────────────────────── */
+.ex-notes {
+  margin: 0 14px 4px; padding: 10px 12px;
+  background: #ffffff07; border-left: 3px solid var(--bg4);
+  border-radius: 0 8px 8px 0; font-size: 12px; color: var(--text2);
+  line-height: 1.7; white-space: pre-wrap;
+  max-height: 5.1em; overflow: hidden; transition: max-height 0.3s ease;
+}
+.ex-notes.expanded { max-height: 600px; }
+.ex-notes-toggle {
+  display: block; background: none; border: none; width: 100%;
+  text-align: left; padding: 4px 14px 10px; font-size: 11px;
+  color: var(--accent2); cursor: pointer; font-family: inherit; font-weight: 600;
+}
+.ex-notes-toggle:hover { color: var(--accent); }
+.ex-card.hyrox-card { border-color: #06b6d420; }
+.ex-card.hyrox-card .ex-check { border-color: #06b6d440; }
+.ex-card.hyrox-card.done { border-color: #06b6d460; }
+.ex-card.hyrox-card.done .ex-check { background: #06b6d4; border-color: #06b6d4; }
+
+/* ── IMPORT TYPE TOGGLE ──────────────────── */
+.import-type-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.import-type-btn {
+  flex: 1; background: var(--bg3); border: 2px solid transparent;
+  color: var(--text2); padding: 9px 0; border-radius: 10px;
+  font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.import-type-btn.active { border-color: var(--accent); color: var(--accent); background: #FF6B3514; }
+.import-type-btn.active.hyrox { border-color: #06b6d4; color: #06b6d4; background: #06b6d414; }
+
 .sessions-grid { display: flex; flex-direction: column; gap: 10px; }
 
 /* ── WEEK SECTIONS ───────────────────────── */
@@ -288,10 +332,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   <!-- ══ PROGRAMME TAB ══════════════════════════ -->
   <div id="view-home" class="view active">
     <header class="app-header">
-      <div style="font-size:22px;flex-shrink:0">🏋️</div>
-      <h1>Mon Programme</h1>
-      <button class="btn-icon" id="btn-home-settings" style="display:none" onclick="openImport()">＋</button>
+      <div style="font-size:22px;flex-shrink:0" id="home-icon">🏋️</div>
+      <h1 id="home-title">Mon Programme</h1>
     </header>
+    <div class="sub-tabs">
+      <button class="sub-tab active" id="subtab-muscu" onclick="switchSubTab('muscu')">💪 Muscu</button>
+      <button class="sub-tab hyrox" id="subtab-hyrox" onclick="switchSubTab('hyrox')">🏃 Hyrox</button>
+    </div>
     <div class="scroll" id="home-scroll">
       <div id="sessions-grid" class="sessions-grid"></div>
       <div id="home-empty" class="empty" style="display:none">
@@ -342,6 +389,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div style="font-size:22px;flex-shrink:0">📊</div>
       <h1>Statistiques</h1>
     </header>
+    <div class="sub-tabs">
+      <button class="sub-tab active" id="stab-muscu" onclick="setStatsTab('muscu')">💪 Muscu</button>
+      <button class="sub-tab hyrox" id="stab-hyrox" onclick="setStatsTab('hyrox')">🏃 Hyrox</button>
+    </div>
     <div class="scroll" id="stats-scroll">
       <div id="stats-content"></div>
     </div>
@@ -368,15 +419,19 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <button class="btn-icon" onclick="closeImport()" style="width:30px;height:30px;font-size:14px">✕</button>
     </div>
     <div class="modal-body">
+      <div class="import-type-row">
+        <button class="import-type-btn active" id="itype-muscu" onclick="setImportType('muscu')">💪 Muscu</button>
+        <button class="import-type-btn hyrox" id="itype-hyrox" onclick="setImportType('hyrox')">🏃 Hyrox</button>
+      </div>
       <div class="import-name-row">
         <label class="import-name-label">Nom de la semaine</label>
         <input type="text" id="import-name" class="import-name-input" placeholder="ex. Semaine 1">
       </div>
       <textarea class="import-ta" id="import-ta"
         placeholder="Colle ton programme ici...&#10;&#10;Séance A - Push&#10;• Développé couché : 4x8-10 https://youtu.be/...&#10;• Élévations latérales : 3x12 https://youtu.be/..."></textarea>
-      <div class="import-fmt">
+      <div class="import-fmt" id="import-fmt-box">
         <h4>Format accepté</h4>
-        <pre><span class="ac">Séance A – Push</span>
+        <pre id="import-fmt-pre"><span class="ac">Séance A – Push</span>
 • Développé couché : <span class="gr">4x6-8</span> https://youtu.be/xxx
 • Élévations latérales : <span class="gr">3x12-15</span> https://youtu.be/xxx
 
@@ -461,17 +516,17 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 // ════════════════════════════════════════════════
 const S = {
   sessions: [],
-  logs: [],           // [{id, date, ts, sessionId, sessionName, exercises:[{exId, exName, sets:[{weight,reps}]}]}]
+  logs: [],
   currentSessionId: null,
   workoutMode: false,
-  workoutData: {},    // exId → [{weight,reps,done}, ...]
+  workoutData: {},
   activeTab: 'programme',
-  // set input context
-  setCtx: null,       // {exId, idx}
-  // stats
+  activeSubTab: 'muscu',
+  statsTab: 'muscu',       // 'muscu' | 'hyrox'
+  importType: 'muscu',
+  setCtx: null,
   statsExId: null,
   statsChartMode: 'weight',
-  // video
   videoUrl: '',
   videoExId: null,
 };
@@ -561,10 +616,24 @@ function renderHome() {
   empty.style.display = 'none';
   fab.style.display = 'flex';
 
+  // Filter by active sub-tab type
+  const filtered = S.sessions
+    .map((s, i) => ({ s, i }))
+    .filter(({ s }) => (s.type || 'muscu') === S.activeSubTab);
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty" style="display:flex">
+      <div class="ei">${S.activeSubTab === 'hyrox' ? '🏃' : '💪'}</div>
+      <h2>Aucun programme ${S.activeSubTab === 'hyrox' ? 'Hyrox' : 'Muscu'}</h2>
+      <p>Importe ton programme en appuyant sur +</p>
+    </div>`;
+    return;
+  }
+
   // Group sessions by weekLabel (preserve insertion order)
   const groups = [];
   const groupMap = {};
-  S.sessions.forEach((s, i) => {
+  filtered.forEach(({ s, i }) => {
     const label = s.weekLabel || 'Programme';
     if (!groupMap[label]) {
       groupMap[label] = { label, sessions: [], startIdx: i };
@@ -678,7 +747,13 @@ function exCardHTML(ex, sess) {
     setsHTML = `<div class="sets-row visible"><div class="sets-row-label">Tapez pour saisir le poids :</div>${bubbles}</div>`;
   }
 
-  return `<div class="ex-card${done ? ' done' : ''}" id="ex-${ex.id}">
+  const isHyrox = (getSession(sess.id)?.type || 'muscu') === 'hyrox';
+  const notesHTML = ex.notes ? `
+    <div class="ex-notes" id="notes-${ex.id}">${esc(ex.notes)}</div>
+    ${ex.notes.length > 80 ? `<button class="ex-notes-toggle" onclick="toggleNotes('${ex.id}')">▼ Voir plus</button>` : ''}
+  ` : '';
+
+  return `<div class="ex-card${done ? ' done' : ''}${isHyrox ? ' hyrox-card' : ''}" id="ex-${ex.id}">
     <div class="ex-header">
       <div class="ex-check" onclick="toggleExDone('${ex.id}')">${done ? '✓' : ''}</div>
       <div class="ex-info">
@@ -688,6 +763,7 @@ function exCardHTML(ex, sess) {
       </div>
       ${playBtn}
     </div>
+    ${notesHTML}
     ${setsHTML}
   </div>`;
 }
@@ -1028,10 +1104,80 @@ document.getElementById('video-modal').addEventListener('click', e => {
 // ════════════════════════════════════════════════
 // IMPORT
 // ════════════════════════════════════════════════
+function switchSubTab(tab) {
+  S.activeSubTab = tab;
+  document.getElementById('subtab-muscu').classList.toggle('active', tab === 'muscu');
+  document.getElementById('subtab-hyrox').classList.toggle('active', tab === 'hyrox');
+  if (tab === 'hyrox') {
+    document.getElementById('home-icon').textContent = '🏃';
+    document.getElementById('home-title').textContent = 'Mon Hyrox';
+  } else {
+    document.getElementById('home-icon').textContent = '🏋️';
+    document.getElementById('home-title').textContent = 'Mon Programme';
+  }
+  renderHome();
+}
+
+function setStatsTab(tab) {
+  S.statsTab = tab;
+  S.statsExId = null; // reset chart selection
+  document.getElementById('stab-muscu').classList.toggle('active', tab === 'muscu');
+  document.getElementById('stab-hyrox').classList.toggle('active', tab === 'hyrox');
+  renderStats();
+}
+
+const FMT_MUSCU = `<span class="ac">LUNDI – UPPER</span>
+1. Développé couché à la barre
+
+Séries × Répétitions : <span class="gr">4 × 5</span> @ RPE 7 (description)
+
+Repos : Minimum 3min entre chaque série
+
+Vidéo d'exécution : https://youtu.be/xxx
+
+Variante : développé haltères
+
+<span class="ac">MERCREDI – LOWER</span>
+1. Squat barre
+
+Séries × Répétitions : <span class="gr">3 × 6</span> @ RPE 7
+
+Vidéo d'exécution : https://youtu.be/xxx`;
+
+const FMT_HYROX = `<span class="ac">BLOC 1 – Ski Erg + Sled Push</span>
+Ski Erg : <span class="gr">1x1000m</span> @RPE8 https://youtu.be/xxx
+Note technique importante ici.
+
+Sled Push : <span class="gr">1x25m</span> @RPE8
+Pousser avec les jambes, dos droit.
+
+<span class="ac">BLOC 2 – Burpee + Row</span>
+Burpee Broad Jump : <span class="gr">1x80m</span> @RPE9 https://youtu.be/xxx
+Sauter le plus loin possible à chaque répétition.
+
+Rowing : <span class="gr">1x1000m</span> @RPE8 https://youtu.be/xxx`;
+
+function setImportType(type) {
+  S.importType = type;
+  document.getElementById('itype-muscu').classList.toggle('active', type === 'muscu');
+  document.getElementById('itype-hyrox').classList.toggle('active', type === 'hyrox');
+
+  // Update format example
+  document.getElementById('import-fmt-pre').innerHTML = type === 'hyrox' ? FMT_HYROX : FMT_MUSCU;
+
+  // Update placeholder
+  document.getElementById('import-ta').placeholder = type === 'hyrox'
+    ? 'Colle ton programme Hyrox ici...\n\nBLOC 1 – Ski Erg + Sled Push\nSki Erg : 1x1000m https://youtu.be/...\nNote technique...\n\nSled Push : 1x25m\nPousser avec les jambes...'
+    : 'Colle ton programme ici...\n\nLUNDI – UPPER\n1. Développé couché à la barre\n\nSéries × Répétitions : 4 × 5 @ RPE 7 (...)\n\nRepos : Minimum 3min\n\nVidéo d\'exécution : https://youtu.be/...';
+
+  // Re-compute week suggestion for this type
+  const existing = [...new Set(S.sessions.filter(s => (s.type||'muscu') === type).map(s => s.weekLabel).filter(Boolean))];
+  document.getElementById('import-name').value = existing.length ? `Semaine ${existing.length + 1}` : 'Semaine 1';
+}
+
 function openImport() {
-  const existing = [...new Set(S.sessions.map(s => s.weekLabel).filter(Boolean))];
-  document.getElementById('import-name').value =
-    existing.length ? `Semaine ${existing.length + 1}` : 'Semaine 1';
+  // Sync type button to active sub-tab
+  setImportType(S.activeSubTab);
   document.getElementById('import-modal').classList.add('open');
 }
 function closeImport() { document.getElementById('import-modal').classList.remove('open'); }
@@ -1045,7 +1191,7 @@ function runImport() {
   if (!text) { toast('Colle ton programme d\'abord !'); return; }
   const parsed = parseProgram(text);
   if (!parsed.length) { toast('⚠️ Aucune séance détectée'); return; }
-  parsed.forEach(s => { s.weekLabel = weekLabel; });
+  parsed.forEach(s => { s.weekLabel = weekLabel; s.type = S.importType; });
   S.sessions = [...S.sessions, ...parsed];
   save();
   closeImport();
@@ -1059,41 +1205,111 @@ function runImport() {
 // PARSER
 // ════════════════════════════════════════════════
 function parseProgram(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const rawLines = text.split('\n');
   const sessions = [];
-  let cur = null;
+  let cur = null, lastEx = null;
 
-  // A line is a session header if:
-  // - markdown heading (#, ##…)
-  // - starts with a known day/session keyword
-  // - starts with ≥2 uppercase letters followed by a separator (handles LUNDI –, MERCREDI –, etc.)
-  // - no URL on the line
+  // ── helpers ───────────────────────────────────
   const isHeader = l => {
+    if (!l) return false;
     if (/^#+\s/.test(l)) return true;
     if (/^(séance|seance|session|jour|day|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|monday|tuesday|wednesday|thursday|friday|saturday|sunday|entraînement|entrainement|workout)\b/i.test(l)) return true;
-    if (l.match(/https?:\/\//)) return false;
-    // All-caps leading word (≥2 chars) then separator: "LUNDI – UPPER", "PUSH DAY", etc.
-    if (/^[A-ZÀÁÂÉÈÊÎÏÔÙÛÜ]{2,}(?:\s[A-ZÀÁÂÉÈÊÎÏÔÙÛÜ]{1,})*\s*[\-–—:]/.test(l)) return true;
+    if (/https?:\/\//.test(l)) return false;
+    if (/^[A-ZÀÁÂÉÈÊÎÏÔÙÛÜ]{2,}(?:\s+(?:[A-ZÀÁÂÉÈÊÎÏÔÙÛÜ]+|\d+))*\s*[\-–—:]/.test(l)) return true;
     return false;
   };
+  const isNumbered = l => /^\d+[.)]\s+\S/.test(l);
+  const isBullet   = l => /^[-•*▸→►]\s/.test(l);
+  const hasUrl     = l => /https?:\/\//.test(l);
+  const hasNxN     = l => /\d+\s*[×xX]\s*\d/.test(l);
 
-  const isBullet = l => /^[-•*▸→►]\s/.test(l) || /^\d+[.)]\s/.test(l);
+  // Structured field detectors (new multi-line format)
+  const isSRLine     = l => /séries?\s*[×xX]\s*rép/i.test(l);
+  const isVideoLine  = l => /vid[ée]o/i.test(l) && hasUrl(l);
+  const isReposLine  = l => /^repos\s*:/i.test(l);
+  const isLabelLine  = l => /^(variante|consigne|ex[eé]cution|exécution|format)\s*:/i.test(l);
 
-  // Detect exercise lines: has sets pattern (NxM) or a YouTube URL
-  const looksLikeExercise = l => /\d+\s*[x×X]\s*\d/.test(l) || /https?:\/\//.test(l);
+  const blankEx = name => ({ id: uid(), name: name.trim(), sets: null, reps: null, rpe: null, youtubeId: null, notes: '' });
+  const addNote = (ex, txt) => { ex.notes = ex.notes ? ex.notes + '\n' + txt : txt; };
 
-  for (const line of lines) {
-    const clean = line.replace(/^#+\s*/, '').trim();
-    if (isHeader(line) && !isBullet(line) && !looksLikeExercise(line)) {
-      cur = { id: uid(), name: clean, exercises: [] };
+  for (const raw of rawLines) {
+    const l = raw.trim();
+    if (!l) continue;
+
+    // ── Session header ──────────────────────────
+    if (isHeader(l) && !isNumbered(l) && !hasNxN(l)) {
+      cur = { id: uid(), name: l.replace(/^#+\s*/, ''), exercises: [] };
       sessions.push(cur);
-    } else if (isBullet(line)) {
-      if (!cur) { cur = { id: uid(), name: 'Programme', exercises: [] }; sessions.push(cur); }
-      cur.exercises.push(parseEx(line.replace(/^[-•*▸→►\d.)\s]+/, '').trim()));
-    } else if (looksLikeExercise(line)) {
-      // Plain exercise line (no bullet) — create a default session if none exists
-      if (!cur) { cur = { id: uid(), name: 'Programme', exercises: [] }; sessions.push(cur); }
-      cur.exercises.push(parseEx(clean));
+      lastEx = null;
+      continue;
+    }
+    if (!cur) { cur = { id: uid(), name: 'Programme', exercises: [] }; sessions.push(cur); }
+
+    // ── New exercise (numbered list) ─────────────
+    if (isNumbered(l)) {
+      lastEx = blankEx(l.replace(/^\d+[.)]\s*/, ''));
+      cur.exercises.push(lastEx);
+      continue;
+    }
+
+    // ── New exercise (bullet, old format) ────────
+    if (isBullet(l)) {
+      lastEx = parseEx(l.replace(/^[-•*▸→►\d.)\s]+/, '').trim());
+      cur.exercises.push(lastEx);
+      continue;
+    }
+
+    // ── Old-format single-line exercise (NxN / URL, not a structured label) ──
+    if (!lastEx && (hasNxN(l) || hasUrl(l)) && !isSRLine(l) && !isVideoLine(l)) {
+      lastEx = parseEx(l);
+      cur.exercises.push(lastEx);
+      continue;
+    }
+
+    // ── Fields / notes for current exercise ──────
+    if (lastEx) {
+
+      // "Séries × Répétitions : X × Y @ RPE Z (description)"
+      if (isSRLine(l)) {
+        const m = l.match(/(\d+)\s*[×xX]\s*(\d+(?:[–\-]\d+)?)\s*(m|km|min|sec|s|cal)?/i);
+        if (m) { lastEx.sets = parseInt(m[1]); lastEx.reps = m[2] + (m[3] ? m[3].toLowerCase() : ''); }
+        const rpeM = l.match(/@\s*(?:RPE\s*)?([\d\-–]+)/i);
+        if (rpeM) lastEx.rpe = rpeM[1];
+        const desc = l.match(/\(([^)]{12,})\)/);
+        if (desc) addNote(lastEx, '💡 ' + desc[1]);
+        continue;
+      }
+
+      // "Vidéo d'exécution : https://..."
+      if (isVideoLine(l)) {
+        const urlM = l.match(/(https?:\/\/[^\s]+)/);
+        if (urlM) lastEx.youtubeId = extractYtId(urlM[1]);
+        continue;
+      }
+
+      // "Repos : ..."
+      if (isReposLine(l)) {
+        addNote(lastEx, '⏱ ' + l.replace(/^repos\s*:\s*/i, ''));
+        continue;
+      }
+
+      // "Variante / Consigne / Exécution / Format : ..."
+      if (isLabelLine(l)) {
+        const label = l.match(/^([^:]+):/)[1].trim();
+        const val   = l.replace(/^[^:]+:\s*/, '');
+        addNote(lastEx, `📌 ${label} : ${val}`);
+        continue;
+      }
+
+      // Anything else → general note
+      addNote(lastEx, l);
+
+    } else {
+      // No exercise yet in this session → create one from this line (circuit/AMRAP descriptions)
+      if (l.length > 3) {
+        lastEx = blankEx(l);
+        cur.exercises.push(lastEx);
+      }
     }
   }
   return sessions.filter(s => s.exercises.length > 0);
@@ -1111,11 +1327,13 @@ function parseEx(content) {
   // Strip @RPE annotations and parenthetical remarks like "(Pas de lien fourni)"
   rest = rest.replace(/@RPE[\d\-–]+/gi, '').replace(/\([^)]*\)/g, '').trim();
 
-  const srRe = /(\d+)\s*[x×X]\s*(\d+(?:[–\-]\d+)?)/;
+  // Capture sets x reps with optional unit: 3x8, 1x1000m, 2x400m, 3x15min
+  const srRe = /(\d+)\s*[x×X]\s*(\d+(?:[–\-]\d+)?)\s*(m|km|min|sec|s|cal)?\b/i;
   const srM = rest.match(srRe);
   let sets = null, reps = null;
   if (srM) {
-    sets = parseInt(srM[1]); reps = srM[2];
+    sets = parseInt(srM[1]);
+    reps = srM[2] + (srM[3] ? srM[3].toLowerCase() : '');
     rest = rest.replace(srM[0], '').replace(/\s*[-–—:]\s*$/, '').trim();
   } else {
     const frM = rest.match(/(\d+)\s*s[ée]ries?\s+(?:de\s+)?(\d+(?:[–\-]\d+)?)/i);
@@ -1154,23 +1372,27 @@ function confirmDeleteSession() {
 function renderStats() {
   const el = document.getElementById('stats-content');
 
-  if (!S.logs.length && !S.sessions.length) {
-    el.innerHTML = `<div class="stats-empty"><div class="sei">📊</div>
-      <p>Aucune donnée pour l'instant.<br>Importe ton programme et commence une séance !</p></div>`;
+  // Filter logs to the active stats tab (muscu vs hyrox)
+  const logs = S.logs.filter(l => (getSession(l.sessionId)?.type || 'muscu') === S.statsTab);
+
+  if (!logs.length) {
+    const label = S.statsTab === 'hyrox' ? 'Hyrox' : 'Muscu';
+    el.innerHTML = `<div class="stats-empty"><div class="sei">${S.statsTab === 'hyrox' ? '🏃' : '💪'}</div>
+      <p>Aucune séance ${label} enregistrée pour l'instant.<br>Lance une séance et saisis tes poids !</p></div>`;
     return;
   }
 
-  // Compute global stats
-  const totalSessions = S.logs.length;
-  const totalSets = S.logs.reduce((s, l) => s + l.exercises.reduce((s2, e) => s2 + e.sets.filter(x => x.weight != null).length, 0), 0);
-  const totalVol = S.logs.reduce((s, l) => s + l.exercises.reduce((s2, e) =>
+  // Compute global stats (filtered by tab)
+  const totalSessions = logs.length;
+  const totalSets = logs.reduce((s, l) => s + l.exercises.reduce((s2, e) => s2 + e.sets.filter(x => x.weight != null).length, 0), 0);
+  const totalVol = logs.reduce((s, l) => s + l.exercises.reduce((s2, e) =>
     s2 + e.sets.reduce((s3, x) => s3 + (x.weight || 0) * (x.reps || 0), 0), 0), 0);
-  const allWeights = S.logs.flatMap(l => l.exercises.flatMap(e => e.sets.map(s => s.weight))).filter(w => w != null);
+  const allWeights = logs.flatMap(l => l.exercises.flatMap(e => e.sets.map(s => s.weight))).filter(w => w != null);
   const maxWeight = allWeights.length ? Math.max(...allWeights) : 0;
 
   // Find which exercise has the max weight
   let maxEx = '';
-  S.logs.forEach(l => l.exercises.forEach(e => {
+  logs.forEach(l => l.exercises.forEach(e => {
     e.sets.forEach(s => { if (s.weight === maxWeight) maxEx = e.exName; });
   }));
 
@@ -1202,8 +1424,8 @@ function renderStats() {
     <div id="sessions-log"></div>
   `;
 
-  // Build exercise list (unique names from logs)
-  const exNames = [...new Set(S.logs.flatMap(l => l.exercises.map(e => e.exName)))];
+  // Build exercise list from filtered logs
+  const exNames = [...new Set(logs.flatMap(l => l.exercises.map(e => e.exName)))];
 
   if (!S.statsExId && exNames.length) S.statsExId = exNames[0];
 
@@ -1213,7 +1435,7 @@ function renderStats() {
   ).join('');
 
   renderChart();
-  renderSessionsLog();
+  renderSessionsLog(logs);
 }
 
 function selectStatsEx(name) {
@@ -1253,7 +1475,9 @@ function setChartMode(mode) {
 
 function buildExChartData(exName) {
   const points = [];
-  S.logs.forEach(log => {
+  // Filter logs by current stats tab for the chart
+  const tabLogs = S.logs.filter(l => (getSession(l.sessionId)?.type || 'muscu') === S.statsTab);
+  tabLogs.forEach(log => {
     log.exercises.forEach(ex => {
       if (ex.exName.toLowerCase() !== exName.toLowerCase()) return;
       const ws = ex.sets.filter(s => s.weight != null);
@@ -1333,12 +1557,12 @@ function renderExStats(data) {
   </div>`;
 }
 
-function renderSessionsLog() {
+function renderSessionsLog(logs) {
   const el = document.getElementById('sessions-log');
   if (!el) return;
-  if (!S.logs.length) { el.innerHTML = '<p style="color:var(--text3);font-size:13px">Aucune séance enregistrée.</p>'; return; }
+  if (!logs || !logs.length) { el.innerHTML = '<p style="color:var(--text3);font-size:13px">Aucune séance enregistrée.</p>'; return; }
 
-  const sorted = [...S.logs].sort((a, b) => b.ts - a.ts);
+  const sorted = [...logs].sort((a, b) => b.ts - a.ts);
   el.innerHTML = sorted.map(log => {
     const vol = log.exercises.reduce((s, e) =>
       s + e.sets.reduce((s2, x) => s2 + (x.weight || 0) * (x.reps || 0), 0), 0);
@@ -1379,6 +1603,17 @@ function renderSessionsLog() {
 document.getElementById('set-input-modal').addEventListener('click', e => {
   if (e.target === document.getElementById('set-input-modal')) closeSetInput();
 });
+
+// ════════════════════════════════════════════════
+// NOTES TOGGLE
+// ════════════════════════════════════════════════
+function toggleNotes(exId) {
+  const el = document.getElementById('notes-' + exId);
+  const btn = el?.nextElementSibling;
+  if (!el) return;
+  const expanded = el.classList.toggle('expanded');
+  if (btn) btn.textContent = expanded ? '▲ Voir moins' : '▼ Voir plus';
+}
 
 // ════════════════════════════════════════════════
 // SERVICE WORKER
