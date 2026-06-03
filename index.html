@@ -1271,7 +1271,10 @@ function parseProgram(text) {
 
       // "Séries × Répétitions : X × Y @ RPE Z (description)"
       if (isSRLine(l)) {
-        const m = l.match(/(\d+)\s*[×xX]\s*(\d+(?:[–\-]\d+)?)\s*(m|km|min|sec|s|cal)?/i);
+        // Normalize LaTeX math: "$3 \times 6$" → "3×6", "\times" → "×"
+        const ln = l.replace(/\$([^$]+)\$/g, (_, inner) => inner.replace(/\\times/g, '×').trim())
+                    .replace(/\\times/g, '×');
+        const m = ln.match(/(\d+)\s*[×xX]\s*(\d+(?:[–\-]\d+)?)\s*(m|km|min|sec|s|cal)?/i);
         if (m) { lastEx.sets = parseInt(m[1]); lastEx.reps = m[2] + (m[3] ? m[3].toLowerCase() : ''); }
         const rpeM = l.match(/@\s*(?:RPE\s*)?([\d\-–]+)/i);
         if (rpeM) lastEx.rpe = rpeM[1];
