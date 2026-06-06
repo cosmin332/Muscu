@@ -388,6 +388,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <header class="app-header">
       <div style="font-size:22px;flex-shrink:0">📊</div>
       <h1>Statistiques</h1>
+      <button class="btn-icon" onclick="openBackup()" title="Sauvegarde" style="margin-left:auto;font-size:20px">💾</button>
     </header>
     <div class="sub-tabs">
       <button class="sub-tab active" id="stab-muscu" onclick="setStatsTab('muscu')">💪 Muscu</button>
@@ -443,6 +444,34 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <div class="modal-footer">
       <button class="btn-pill grey" onclick="closeImport()">Annuler</button>
       <button class="btn-pill" onclick="runImport()">📥 Importer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BACKUP MODAL ═══════════════════════════ -->
+<div class="overlay" id="backup-modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-header">
+      <h2>💾 Sauvegarde</h2>
+      <button class="btn-icon" onclick="closeBackup()" style="width:30px;height:30px;font-size:14px">✕</button>
+    </div>
+    <div class="modal-body" style="gap:14px">
+      <div class="backup-section">
+        <h3 style="font-size:14px;color:var(--text2);margin:0 0 8px">Exporter mes données</h3>
+        <p style="font-size:13px;color:var(--text3);margin:0 0 12px">Télécharge un fichier JSON avec toutes tes séances et performances. Conserve-le comme sauvegarde.</p>
+        <button class="btn-pill" onclick="exportBackup()" style="width:100%">📤 Exporter (JSON)</button>
+      </div>
+      <div style="border-top:1px solid #ffffff18;margin:4px 0"></div>
+      <div class="backup-section">
+        <h3 style="font-size:14px;color:var(--text2);margin:0 0 8px">Importer une sauvegarde</h3>
+        <p style="font-size:13px;color:var(--text3);margin:0 0 12px">Restaure depuis un fichier JSON exporté. Les données existantes sont conservées, seules les entrées manquantes sont ajoutées.</p>
+        <label class="btn-pill grey" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+          📥 Importer (JSON)
+          <input type="file" accept=".json" id="backup-file-input" style="display:none" onchange="importBackupFile(this)">
+        </label>
+      </div>
+      <div id="backup-msg" style="display:none;font-size:13px;padding:10px 14px;border-radius:10px;text-align:center"></div>
     </div>
   </div>
 </div>
@@ -1184,6 +1213,72 @@ function closeImport() { document.getElementById('import-modal').classList.remov
 document.getElementById('import-modal').addEventListener('click', e => {
   if (e.target === document.getElementById('import-modal')) closeImport();
 });
+
+// ── BACKUP ────────────────────────────────────────────
+function openBackup() {
+  document.getElementById('backup-msg').style.display = 'none';
+  document.getElementById('backup-file-input').value = '';
+  document.getElementById('backup-modal').classList.add('open');
+}
+function closeBackup() { document.getElementById('backup-modal').classList.remove('open'); }
+document.getElementById('backup-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('backup-modal')) closeBackup();
+});
+
+function exportBackup() {
+  const data = { version: 1, exportedAt: new Date().toISOString(), sessions: S.sessions, logs: S.logs };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  a.href = url;
+  a.download = `muscu_backup_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showBackupMsg('✅ Sauvegarde exportée !', 'green');
+}
+
+function importBackupFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.sessions || !data.logs) throw new Error('Format invalide');
+
+      // Merge sessions (skip existing IDs)
+      const existingSessionIds = new Set(S.sessions.map(s => s.id));
+      let newSessions = 0;
+      data.sessions.forEach(s => {
+        if (!existingSessionIds.has(s.id)) { S.sessions.push(s); newSessions++; }
+      });
+
+      // Merge logs (skip existing IDs)
+      const existingLogIds = new Set(S.logs.map(l => l.id));
+      let newLogs = 0;
+      data.logs.forEach(l => {
+        if (!existingLogIds.has(l.id)) { S.logs.push(l); newLogs++; }
+      });
+
+      save();
+      renderHome();
+      showBackupMsg(`✅ Importé : ${newSessions} séance(s), ${newLogs} log(s) ajouté(s).`, 'green');
+    } catch (err) {
+      showBackupMsg('❌ Fichier invalide ou corrompu.', 'red');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showBackupMsg(text, color) {
+  const el = document.getElementById('backup-msg');
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = color === 'green' ? '#22c55e22' : '#ef444422';
+  el.style.color = color === 'green' ? '#22c55e' : '#ef4444';
+}
 
 function runImport() {
   const text = document.getElementById('import-ta').value.trim();
