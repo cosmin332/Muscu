@@ -1,4 +1,4 @@
-const CACHE = 'muscu-v2';
+const CACHE = 'muscu-v3';
 const ASSETS = ['./index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {

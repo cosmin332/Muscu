@@ -90,6 +90,31 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 }
 .sub-tab.active { background: var(--accent); color: #fff; }
 .sub-tab.hyrox.active { background: #06b6d4; }
+.sub-tab.mobilite.active { background: #a855f7; }
+
+/* ── MOBILITÉ ────────────────────────────── */
+.mob-progress { background: var(--bg2); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+.mob-progress-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.mob-progress-top h3 { font-size: 14px; font-weight: 700; }
+.mob-progress-top .mp-count { font-size: 14px; font-weight: 800; color: #c084fc; }
+.mob-bar { height: 8px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
+.mob-bar-fill { height: 100%; background: linear-gradient(90deg, #a855f7, #c084fc); border-radius: 4px; transition: width 0.4s; }
+.mob-card-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 8px; background: #30D15822; color: var(--green); display: inline-flex; align-items: center; gap: 3px; }
+.mob-card-day { font-size: 11px; font-weight: 700; color: #c084fc; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.mob-check-btn { width: 100%; padding: 15px; border-radius: 14px; border: none; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.mob-check-btn.todo { background: linear-gradient(135deg, #a855f7, #c084fc); color: #fff; box-shadow: 0 4px 18px #a855f760; }
+.mob-check-btn.done { background: #30D15822; color: var(--green); }
+.mob-check-btn:active { transform: scale(0.97); }
+.mob-ex-card { background: var(--bg2); border-radius: 14px; padding: 13px 15px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+.mob-ex-num { width: 26px; height: 26px; border-radius: 8px; background: #a855f722; color: #c084fc; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.mob-ex-body { flex: 1; min-width: 0; }
+.mob-ex-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.mob-ex-detail { display: inline-block; font-size: 12px; font-weight: 700; color: #c084fc; background: #a855f718; padding: 2px 8px; border-radius: 7px; margin-top: 5px; }
+.mob-ex-note { font-size: 12px; color: var(--text2); line-height: 1.45; margin-top: 6px; }
+.mob-day-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--bg2); border-radius: 12px; margin-bottom: 8px; }
+.mob-day-row .mdr-name { flex: 1; font-size: 14px; font-weight: 600; }
+.mob-day-row .mdr-count { font-size: 13px; font-weight: 700; color: var(--text2); }
+.mob-day-row .mdr-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── EXERCISE NOTES ──────────────────────── */
 .ex-notes {
@@ -341,6 +366,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <div class="sub-tabs">
       <button class="sub-tab active" id="subtab-muscu" onclick="switchSubTab('muscu')">💪 Muscu</button>
       <button class="sub-tab hyrox" id="subtab-hyrox" onclick="switchSubTab('hyrox')">🏃 Hyrox</button>
+      <button class="sub-tab mobilite" id="subtab-mobilite" onclick="switchSubTab('mobilite')">🤸 Mobilité</button>
     </div>
     <div class="scroll" id="home-scroll">
       <div id="sessions-grid" class="sessions-grid"></div>
@@ -368,7 +394,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       </div>
       <div class="session-meta" id="session-meta"></div>
       <div class="exercises-list" id="exercises-list"></div>
-      <button class="danger-btn" onclick="confirmDeleteSession()">🗑 Supprimer cette séance</button>
+      <button class="danger-btn" id="btn-delete-session" onclick="confirmDeleteSession()">🗑 Supprimer cette séance</button>
     </div>
     <div class="workout-bar" id="workout-bar">
       <div class="wb-info">
@@ -396,6 +422,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <div class="sub-tabs">
       <button class="sub-tab active" id="stab-muscu" onclick="setStatsTab('muscu')">💪 Muscu</button>
       <button class="sub-tab hyrox" id="stab-hyrox" onclick="setStatsTab('hyrox')">🏃 Hyrox</button>
+      <button class="sub-tab mobilite" id="stab-mobilite" onclick="setStatsTab('mobilite')">🤸 Mobilité</button>
     </div>
     <div class="scroll" id="stats-scroll">
       <div id="stats-content"></div>
@@ -571,12 +598,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 const S = {
   sessions: [],
   logs: [],
+  mobilityLog: [],         // [{ id, sessionId, sessionName, date, ts }]
   currentSessionId: null,
   workoutMode: false,
   workoutData: {},
   activeTab: 'programme',
   activeSubTab: 'muscu',
-  statsTab: 'muscu',       // 'muscu' | 'hyrox'
+  statsTab: 'muscu',       // 'muscu' | 'hyrox' | 'mobilite'
   importType: 'muscu',
   setCtx: null,
   statsExId: null,
@@ -591,10 +619,101 @@ const S = {
 function save() {
   localStorage.setItem('muscu_sessions', JSON.stringify(S.sessions));
   localStorage.setItem('muscu_logs', JSON.stringify(S.logs));
+  localStorage.setItem('muscu_mobilitylog', JSON.stringify(S.mobilityLog));
 }
 function load() {
   try { S.sessions = JSON.parse(localStorage.getItem('muscu_sessions') || '[]'); } catch { S.sessions = []; }
   try { S.logs = JSON.parse(localStorage.getItem('muscu_logs') || '[]'); } catch { S.logs = []; }
+  try { S.mobilityLog = JSON.parse(localStorage.getItem('muscu_mobilitylog') || '[]'); } catch { S.mobilityLog = []; }
+}
+
+// ════════════════════════════════════════════════
+// MOBILITÉ — séances prédéfinies (course à pied)
+// ════════════════════════════════════════════════
+function mobEx(name, detail, note) { return { id: uid(), name, detail, notes: note || '', youtubeId: null }; }
+
+function defaultMobilitySessions() {
+  return [
+    {
+      id: 'mob-lundi', type: 'mobilite', day: 'Lundi', dayIdx: 1,
+      name: 'LUNDI – Gainage & Sangle abdominale', weekLabel: 'Programme course à pied',
+      exercises: [
+        mobEx('Planche (gainage ventral)', '3 × 45 sec', 'Corps aligné, gainez les abdos et les fessiers, ne creusez pas le bas du dos.'),
+        mobEx('Planche latérale', '3 × 30 sec / côté', 'Hanches hautes, corps en ligne. Renforce les obliques et la stabilité du bassin.'),
+        mobEx('Mountain climbers (gainage dynamique)', '3 × 30 sec', 'Position de pompe, ramenez les genoux vers la poitrine en rythme, sans monter les fesses.'),
+        mobEx('Relevés de jambes (bas du ventre)', '3 × 15', 'Allongé sur le dos, jambes tendues, descendez lentement sans cambrer le dos.'),
+        mobEx('Hollow hold', '3 × 30 sec', 'Dos plaqué au sol, épaules et jambes décollées. Gainage profond essentiel pour la course.'),
+        mobEx('Superman (extension lombaires)', '3 × 15', 'Sur le ventre, décollez bras et jambes. Renforce les lombaires souvent négligés en course.'),
+      ],
+    },
+    {
+      id: 'mob-mercredi', type: 'mobilite', day: 'Mercredi', dayIdx: 3,
+      name: 'MERCREDI – Mobilité hanches & chevilles', weekLabel: 'Programme course à pied',
+      exercises: [
+        mobEx('Cercles de hanches', '2 × 10 / côté', 'Debout, dessinez de grands cercles avec le genou pour ouvrir la hanche.'),
+        mobEx("World's greatest stretch", '2 × 8 / côté', 'Fente avant, coude au sol côté jambe avant puis rotation du buste. Mobilité globale.'),
+        mobEx('Mobilité cheville (genou au mur)', '3 × 12 / côté', 'Genou vers le mur sans décoller le talon. Améliore la flexion dorsale, clé pour la foulée.'),
+        mobEx('Étirement psoas / fléchisseurs', '2 × 30 sec / côté', 'Fente genou au sol, poussez le bassin vers l\'avant. Libère les hanches après être assis.'),
+        mobEx('Deep squat hold (squat profond tenu)', '3 × 30 sec', 'Descendez en squat complet talons au sol, poussez les genoux vers l\'extérieur.'),
+        mobEx('Leg swings (balancements de jambe)', '2 × 15 / côté', 'Balancez la jambe avant/arrière puis latéralement. Mobilité dynamique pré-course.'),
+      ],
+    },
+    {
+      id: 'mob-jeudi', type: 'mobilite', day: 'Jeudi', dayIdx: 4,
+      name: 'JEUDI – Renforcement jambes & fessiers', weekLabel: 'Programme course à pied',
+      exercises: [
+        mobEx('Montées sur pointes (mollets)', '3 × 20', 'Montez lentement sur la pointe des pieds. Mollets puissants = meilleure propulsion.'),
+        mobEx('Fentes marchées', '3 × 12 / jambe', 'Grand pas, genou arrière proche du sol, buste droit. Renforce quadris et fessiers.'),
+        mobEx('Pont fessier (glute bridge)', '3 × 15', 'Allongé, montez le bassin en serrant les fessiers. Active les fessiers souvent endormis.'),
+        mobEx('Pont fessier sur une jambe', '3 × 12 / côté', 'Même mouvement, une jambe tendue. Corrige les déséquilibres gauche/droite.'),
+        mobEx('Step-up (montée sur banc)', '3 × 12 / jambe', 'Montez en poussant sur le talon, contrôlez la descente. Spécifique au geste de course.'),
+        mobEx('Chaise contre le mur (wall sit)', '3 × 45 sec', 'Dos au mur, cuisses parallèles au sol. Endurance des quadriceps.'),
+      ],
+    },
+    {
+      id: 'mob-samedi', type: 'mobilite', day: 'Samedi', dayIdx: 6,
+      name: 'SAMEDI – Stabilité, proprioception & core', weekLabel: 'Programme course à pied',
+      exercises: [
+        mobEx('Équilibre sur une jambe', '3 × 30 sec / côté', 'Tenez en équilibre, puis fermez les yeux pour augmenter la difficulté. Prévient les entorses.'),
+        mobEx('Single-leg deadlift (équilibre)', '3 × 10 / côté', 'Penchez le buste en levant la jambe arrière, dos droit. Chaîne postérieure + stabilité.'),
+        mobEx('Clamshell (coquille)', '3 × 15 / côté', 'Allongé sur le côté, ouvrez le genou supérieur. Renforce le moyen fessier (stabilité du bassin).'),
+        mobEx('Dead bug', '3 × 12 / côté', 'Sur le dos, tendez bras et jambe opposés sans cambrer. Coordination et gainage anti-rotation.'),
+        mobEx('Planche avec levée bras/jambe', '3 × 20 sec', 'En planche, levez un bras ou une jambe en gardant le bassin stable.'),
+        mobEx('Russian twist', '3 × 20', 'Assis, buste incliné, tournez le tronc de gauche à droite. Renforce les obliques.'),
+      ],
+    },
+  ];
+}
+
+function ensureMobilitySessions() {
+  if (localStorage.getItem('muscu_mobility_seeded')) return;
+  const hasMob = S.sessions.some(s => s.type === 'mobilite');
+  if (!hasMob) S.sessions.push(...defaultMobilitySessions());
+  localStorage.setItem('muscu_mobility_seeded', '1');
+  save();
+}
+
+// ── Mobilité helpers ──
+function ymd(dt) {
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+function weekKey(dateStr) {
+  const dt = new Date(dateStr + 'T00:00:00');
+  const day = (dt.getDay() + 6) % 7; // Lundi = 0
+  dt.setDate(dt.getDate() - day);
+  return ymd(dt); // local, timezone-safe
+}
+function isMobDoneToday(sessionId) {
+  const t = todayISO();
+  return S.mobilityLog.some(e => e.sessionId === sessionId && e.date === t);
+}
+function isMobDoneThisWeek(sessionId) {
+  const wk = weekKey(todayISO());
+  return S.mobilityLog.some(e => e.sessionId === sessionId && weekKey(e.date) === wk);
+}
+function getMobLastDone(sessionId) {
+  const entries = S.mobilityLog.filter(e => e.sessionId === sessionId).sort((a, b) => b.ts - a.ts);
+  return entries[0] || null;
 }
 
 // ════════════════════════════════════════════════
@@ -668,12 +787,15 @@ function renderHome() {
     return;
   }
   empty.style.display = 'none';
-  fab.style.display = 'flex';
+  fab.style.display = S.activeSubTab === 'mobilite' ? 'none' : 'flex';
 
   // Filter by active sub-tab type
   const filtered = S.sessions
     .map((s, i) => ({ s, i }))
     .filter(({ s }) => (s.type || 'muscu') === S.activeSubTab);
+
+  // Mobilité has its own dedicated layout
+  if (S.activeSubTab === 'mobilite') { renderMobilityHome(filtered.map(f => f.s)); return; }
 
   if (!filtered.length) {
     grid.innerHTML = `<div class="empty" style="display:flex">
@@ -731,6 +853,105 @@ function goHome() {
 }
 
 // ════════════════════════════════════════════════
+// MOBILITÉ — accueil & séance
+// ════════════════════════════════════════════════
+function renderMobilityHome(sessions) {
+  const grid = document.getElementById('sessions-grid');
+  // Order by weekday
+  sessions = sessions.slice().sort((a, b) => (a.dayIdx || 0) - (b.dayIdx || 0));
+
+  const doneThisWeek = sessions.filter(s => isMobDoneThisWeek(s.id)).length;
+  const total = sessions.length;
+  const pct = total ? Math.round(doneThisWeek / total * 100) : 0;
+
+  const progressHTML = `<div class="mob-progress">
+    <div class="mob-progress-top">
+      <h3>Cette semaine</h3>
+      <span class="mp-count">${doneThisWeek} / ${total} séances</span>
+    </div>
+    <div class="mob-bar"><div class="mob-bar-fill" style="width:${pct}%"></div></div>
+  </div>`;
+
+  const cards = sessions.map(s => {
+    const done = isMobDoneThisWeek(s.id);
+    const last = getMobLastDone(s.id);
+    const title = s.name.includes('–') ? s.name.split('–').slice(1).join('–').trim() : s.name;
+    return `<div class="session-card" onclick="openSession('${s.id}')">
+      <div class="session-card-inner">
+        <div class="snum" style="background:${done ? 'var(--green)' : '#a855f7'}">${done ? '✓' : (s.day ? s.day[0] : '•')}</div>
+        <div class="sinfo">
+          <div class="mob-card-day">${esc(s.day || '')}</div>
+          <h3>${esc(title)}</h3>
+          <p>${s.exercises.length} exercices${last ? ` · Dernière : ${fmtDate(last.date)}` : ''}</p>
+        </div>
+        ${done ? '<span class="mob-card-badge">✓ Fait</span>' : '<div style="color:var(--text3);font-size:18px">›</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.innerHTML = progressHTML + `<div class="week-sessions">${cards}</div>`;
+}
+
+function openMobilitySession(sess) {
+  document.getElementById('session-view-title').textContent = sess.day || sess.name;
+
+  const doneToday = isMobDoneToday(sess.id);
+  const btn = document.getElementById('btn-workout');
+  btn.style.display = 'none'; // mobility uses its own check button at the bottom
+  const delBtn = document.getElementById('btn-delete-session');
+  if (delBtn) delBtn.style.display = 'none'; // predefined program — no delete
+
+  document.getElementById('workout-bar').classList.remove('visible');
+  document.getElementById('complete-banner').style.display = 'none';
+
+  const last = getMobLastDone(sess.id);
+  document.getElementById('session-meta').innerHTML = `
+    <div class="meta-chip"><span>${sess.exercises.length}</span> exercices</div>
+    ${last ? `<div class="meta-chip">Dernière : ${fmtDate(last.date)}</div>` : ''}
+  `;
+
+  // Exercise cards
+  document.getElementById('exercises-list').innerHTML = sess.exercises.map((ex, i) => mobilityCardHTML(ex, i)).join('')
+    + `<button class="mob-check-btn ${doneToday ? 'done' : 'todo'}" id="mob-check" onclick="toggleMobilityDone('${sess.id}')">
+        ${doneToday ? '✓ Séance faite aujourd\'hui (appuyer pour annuler)' : '✓ Marquer comme fait'}
+      </button>`;
+
+  showView('session');
+}
+
+function mobilityCardHTML(ex, i) {
+  const playBtn = `<div class="ex-actions">
+    ${ex.youtubeId ? `<button class="btn-play" onclick="openVideo('${ex.id}')">▶</button>` : ''}
+    <button class="btn-edit-video" onclick="openEditVideo('${ex.id}')" title="Modifier la vidéo">✏️</button>
+  </div>`;
+  return `<div class="mob-ex-card" id="ex-${ex.id}">
+    <div class="mob-ex-num">${i + 1}</div>
+    <div class="mob-ex-body">
+      <div class="mob-ex-name">${esc(ex.name)}</div>
+      ${ex.detail ? `<span class="mob-ex-detail">${esc(ex.detail)}</span>` : ''}
+      ${ex.notes ? `<div class="mob-ex-note">${esc(ex.notes)}</div>` : ''}
+    </div>
+    ${playBtn}
+  </div>`;
+}
+
+function toggleMobilityDone(sessionId) {
+  const sess = getSession(sessionId);
+  if (!sess) return;
+  const t = todayISO();
+  const idx = S.mobilityLog.findIndex(e => e.sessionId === sessionId && e.date === t);
+  if (idx >= 0) {
+    S.mobilityLog.splice(idx, 1);
+    toast('Séance décochée');
+  } else {
+    S.mobilityLog.push({ id: uid(), sessionId, sessionName: sess.name, date: t, ts: Date.now() });
+    toast('💪 Bien joué ! Séance validée');
+  }
+  save();
+  openMobilitySession(sess); // refresh view
+}
+
+// ════════════════════════════════════════════════
 // SESSION VIEW
 // ════════════════════════════════════════════════
 function openSession(sessionId) {
@@ -740,9 +961,15 @@ function openSession(sessionId) {
   const sess = getSession(sessionId);
   if (!sess) return;
 
+  // Mobilité sessions use a dedicated check-based view
+  if (sess.type === 'mobilite') { openMobilitySession(sess); return; }
+
   document.getElementById('session-view-title').textContent = sess.name;
+  document.getElementById('btn-workout').style.display = '';
   document.getElementById('btn-workout').textContent = 'Commencer';
   document.getElementById('btn-workout').className = 'btn-pill';
+  const delBtn = document.getElementById('btn-delete-session');
+  if (delBtn) delBtn.style.display = '';
   document.getElementById('workout-bar').classList.remove('visible');
   document.getElementById('complete-banner').style.display = 'none';
 
@@ -1164,9 +1391,13 @@ function switchSubTab(tab) {
   S.activeSubTab = tab;
   document.getElementById('subtab-muscu').classList.toggle('active', tab === 'muscu');
   document.getElementById('subtab-hyrox').classList.toggle('active', tab === 'hyrox');
+  document.getElementById('subtab-mobilite').classList.toggle('active', tab === 'mobilite');
   if (tab === 'hyrox') {
     document.getElementById('home-icon').textContent = '🏃';
     document.getElementById('home-title').textContent = 'Mon Hyrox';
+  } else if (tab === 'mobilite') {
+    document.getElementById('home-icon').textContent = '🤸';
+    document.getElementById('home-title').textContent = 'Mobilité & Course';
   } else {
     document.getElementById('home-icon').textContent = '🏋️';
     document.getElementById('home-title').textContent = 'Mon Programme';
@@ -1179,6 +1410,7 @@ function setStatsTab(tab) {
   S.statsExId = null; // reset chart selection
   document.getElementById('stab-muscu').classList.toggle('active', tab === 'muscu');
   document.getElementById('stab-hyrox').classList.toggle('active', tab === 'hyrox');
+  document.getElementById('stab-mobilite').classList.toggle('active', tab === 'mobilite');
   renderStats();
 }
 
@@ -1232,8 +1464,8 @@ function setImportType(type) {
 }
 
 function openImport() {
-  // Sync type button to active sub-tab
-  setImportType(S.activeSubTab);
+  // Sync type button to active sub-tab (mobilité has no import — default to muscu)
+  setImportType(S.activeSubTab === 'mobilite' ? 'muscu' : S.activeSubTab);
   document.getElementById('import-modal').classList.add('open');
 }
 function closeImport() { document.getElementById('import-modal').classList.remove('open'); }
@@ -1253,7 +1485,7 @@ document.getElementById('backup-modal').addEventListener('click', e => {
 });
 
 function exportBackup() {
-  const data = { version: 1, exportedAt: new Date().toISOString(), sessions: S.sessions, logs: S.logs };
+  const data = { version: 1, exportedAt: new Date().toISOString(), sessions: S.sessions, logs: S.logs, mobilityLog: S.mobilityLog };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1288,6 +1520,14 @@ function importBackupFile(input) {
       data.logs.forEach(l => {
         if (!existingLogIds.has(l.id)) { S.logs.push(l); newLogs++; }
       });
+
+      // Merge mobility log (skip existing IDs)
+      if (Array.isArray(data.mobilityLog)) {
+        const existingMobIds = new Set(S.mobilityLog.map(m => m.id));
+        data.mobilityLog.forEach(m => {
+          if (!existingMobIds.has(m.id)) S.mobilityLog.push(m);
+        });
+      }
 
       save();
       renderHome();
@@ -1352,6 +1592,8 @@ function _applyVideoLink(ytId) {
   if (!ex) return;
   ex.youtubeId = ytId;
   save();
+  // Mobility sessions re-render their whole view (different card layout)
+  if (sess.type === 'mobilite') { openMobilitySession(sess); return; }
   // Re-render only this card
   const card = document.getElementById('ex-' + ex.id);
   if (card) card.outerHTML = exCardHTML(ex, sess);
@@ -1547,6 +1789,9 @@ function confirmDeleteSession() {
 function renderStats() {
   const el = document.getElementById('stats-content');
 
+  // Mobilité has its own stats view (check-based, not weight-based)
+  if (S.statsTab === 'mobilite') { renderMobilityStats(el); return; }
+
   // Filter logs to the active stats tab (muscu vs hyrox)
   const logs = S.logs.filter(l => (getSession(l.sessionId)?.type || 'muscu') === S.statsTab);
 
@@ -1611,6 +1856,85 @@ function renderStats() {
 
   renderChart();
   renderSessionsLog(logs);
+}
+
+function renderMobilityStats(el) {
+  const log = S.mobilityLog;
+  const mobSessions = S.sessions.filter(s => s.type === 'mobilite').sort((a, b) => (a.dayIdx || 0) - (b.dayIdx || 0));
+
+  if (!log.length) {
+    el.innerHTML = `<div class="stats-empty"><div class="sei">🤸</div>
+      <p>Aucune séance mobilité validée pour l'instant.<br>Va dans l'onglet Mobilité et coche une séance faite !</p></div>`;
+    return;
+  }
+
+  const total = log.length;
+  const wkNow = weekKey(todayISO());
+  const thisWeek = log.filter(e => weekKey(e.date) === wkNow).length;
+  const now = new Date();
+  const thisMonth = log.filter(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  // Streak: consecutive weeks (back from current or last) with >= 1 session
+  const weeksWith = new Set(log.map(e => weekKey(e.date)));
+  let streak = 0;
+  let cur = new Date(wkNow + 'T00:00:00');
+  if (!weeksWith.has(wkNow)) cur.setDate(cur.getDate() - 7); // allow streak from last week
+  while (weeksWith.has(ymd(cur))) {
+    streak++;
+    cur.setDate(cur.getDate() - 7);
+  }
+
+  // Per-day breakdown
+  const dayRows = mobSessions.map(s => {
+    const count = log.filter(e => e.sessionId === s.id).length;
+    const doneWk = isMobDoneThisWeek(s.id);
+    return `<div class="mob-day-row">
+      <div class="mdr-dot" style="background:${doneWk ? 'var(--green)' : 'var(--bg4)'}"></div>
+      <div class="mdr-name">${esc(s.day || s.name)}</div>
+      <div class="mdr-count">${count}× au total</div>
+    </div>`;
+  }).join('');
+
+  // History (most recent first)
+  const history = log.slice().sort((a, b) => b.ts - a.ts).map(e => {
+    const sess = getSession(e.sessionId);
+    const title = (sess && sess.day) ? sess.day : e.sessionName;
+    return `<div class="log-card"><div class="log-card-header">
+      <div><div class="log-card-date">${fmtDateShort(e.date)}</div>
+      <div class="log-card-session">${esc(title)} — ${esc(sess ? sess.name.split('–').slice(1).join('–').trim() : '')}</div></div>
+      <div style="font-size:20px">✅</div>
+    </div></div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="stats-summary">
+      <div class="stat-card" style="background:#a855f720">
+        <div class="sc-val" style="color:#c084fc">${thisWeek}/4</div>
+        <div class="sc-label">Cette semaine</div>
+      </div>
+      <div class="stat-card green">
+        <div class="sc-val">${streak}</div>
+        <div class="sc-label">Semaine${streak > 1 ? 's' : ''} d'affilée 🔥</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="sc-val">${thisMonth}</div>
+        <div class="sc-label">Ce mois-ci</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="sc-val">${total}</div>
+        <div class="sc-label">Total séances</div>
+      </div>
+    </div>
+
+    <div class="section-title">Répartition par séance</div>
+    ${dayRows}
+
+    <div class="section-title" style="margin-top:20px">Historique</div>
+    ${history}
+  `;
 }
 
 function selectStatsEx(name) {
@@ -1799,6 +2123,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').ca
 // INIT
 // ════════════════════════════════════════════════
 load();
+ensureMobilitySessions();
 renderHome();
 </script>
 </body>
